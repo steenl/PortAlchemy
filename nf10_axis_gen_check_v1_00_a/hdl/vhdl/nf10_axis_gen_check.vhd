@@ -1,6 +1,5 @@
 ------------------------------------------------------------------------------
 --
---  NetFPGA-10G http://www.netfpga.org
 --
 --  File:
 --        nf10_axis_gen_check.vhd
@@ -9,7 +8,7 @@
 --        hw/std/pcores/nf10_axis_gen_check_v1_00_a
 --
 --  Author:
---        Michaela Blott
+--        Steen Larsen & Michaela Blott
 --
 --  Description:
 --                Hardware component that generates and checks packets.
@@ -20,10 +19,8 @@
 --        Copyright (C) 2010, 2011 Xilinx, Inc.
 --
 --  Licence:
---        This file is part of the NetFPGA 10G development base package.
---
 --        This file is free code: you can redistribute it and/or modify it under
---        the terms of the GNU Lesser General Public License version 2.1 as
+--        the terms of the GNU Lesser General Public License version 3.0 as
 --        published by the Free Software Foundation.
 --
 --        This package is distributed in the hope that it will be useful, but
@@ -462,5 +459,6 @@ begin
 end process;
 
 LED03 <= led_reg;
+
 
 end structural;
