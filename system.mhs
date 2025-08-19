@@ -81,7 +81,7 @@
  PORT MDC = nf10_mdio_0_PHY_MDC, DIR = O
  PORT MDIO = nf10_mdio_0_PHY_MDIO, DIR = IO
  PORT PHY_RST_N = nf10_mdio_0_PHY_rst_n, DIR = O, RST_POLARITY = 1
- PORT nf10_axis_gen_check_0_LED03_pin = LED03, DIR = O
+ PORT ualink_axis_turbo64_0_LED03_pin = LED03, DIR = O
 
 
 BEGIN axi_interconnect
@@ -206,7 +206,7 @@ BEGIN nf10_10g_interface
  PARAMETER INSTANCE = nf10_10g_interface_0
  PARAMETER HW_VER = 1.10.a
  PARAMETER C_XAUI_REVERSE = 1
- BUS_INTERFACE S_AXIS = nf10_axis_gen_check_0_M_AXIS
+ BUS_INTERFACE S_AXIS = ualink_axis_turbo64_0_M_AXIS
  BUS_INTERFACE M_AXIS = nf10_10g_interface_0_M_AXIS
  PORT axi_aclk = core_clk
  PORT refclk = refclk_A
@@ -289,7 +289,7 @@ END
 BEGIN nf10_10g_interface
  PARAMETER INSTANCE = nf10_10g_interface_3
  PARAMETER HW_VER = 1.10.a
- BUS_INTERFACE S_AXIS = nf10_axis_gen_check_1_M_AXIS
+ BUS_INTERFACE S_AXIS = ualink_axis_turbo64_1_M_AXIS
  BUS_INTERFACE M_AXIS = nf10_10g_interface_3_M_AXIS
  PORT xaui_tx_l3_p = nf10_10g_interface_3_xaui_tx_l3_p
  PORT xaui_tx_l3_n = nf10_10g_interface_3_xaui_tx_l3_n
@@ -369,8 +369,8 @@ BEGIN axi_timebase_wdt
  PORT S_AXI_ACLK = control_clk
 END
 
-BEGIN nf10_axis_gen_check
- PARAMETER INSTANCE = nf10_axis_gen_check_0
+BEGIN ualink_axis_turbo64
+ PARAMETER INSTANCE = ualink_turbo64_0
  PARAMETER HW_VER = 1.00.a
  PARAMETER C_INTERCONNECT_S_AXI_MASTERS = microblaze_0.M_AXI_DP
  PARAMETER C_BASEADDR = 0x77620000
@@ -378,7 +378,7 @@ BEGIN nf10_axis_gen_check
  PARAMETER C_GEN_PKT_SIZE = 16
  PARAMETER C_CHECK_PKT_SIZE = 16
  BUS_INTERFACE S_AXI = axi_interconnect_memory_mapped_lite_0
- BUS_INTERFACE M_AXIS = nf10_axis_gen_check_0_M_AXIS
+ BUS_INTERFACE M_AXIS = ualink_axis_turbo64_0_M_AXIS
  BUS_INTERFACE S_AXIS = nf10_10g_interface_0_M_AXIS
  PORT S_AXI_ACLK = control_clk
  PORT aclk = core_clk
@@ -449,8 +449,8 @@ BEGIN nf10_axis_gen_check
  PORT CS_M_AXIS_TDATA63 = CS_M_AXIS_TDATA63
 END
 
-BEGIN nf10_axis_gen_check
- PARAMETER INSTANCE = nf10_axis_gen_check_1
+BEGIN ualink_axis_turbo64
+ PARAMETER INSTANCE = ualink_turbo64_1
  PARAMETER HW_VER = 1.00.a
  PARAMETER C_INTERCONNECT_S_AXI_MASTERS = microblaze_0.M_AXI_DP
  PARAMETER C_BASEADDR = 0x77600000
@@ -458,7 +458,7 @@ BEGIN nf10_axis_gen_check
  PARAMETER C_GEN_PKT_SIZE = 16
  PARAMETER C_CHECK_PKT_SIZE = 16
  BUS_INTERFACE S_AXI = axi_interconnect_memory_mapped_lite_0
- BUS_INTERFACE M_AXIS = nf10_axis_gen_check_1_M_AXIS
+ BUS_INTERFACE M_AXIS = ualink_axis_turbo64_1_M_AXIS
  BUS_INTERFACE S_AXIS = nf10_10g_interface_3_M_AXIS
  PORT S_AXI_ACLK = control_clk
  PORT aclk = core_clk
