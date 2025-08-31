@@ -59,10 +59,48 @@ void Packet::update() {
         }
         if (layers[i+1]->kind() == Kind::TCP) {
             auto* tcp_layer = static_cast<tcp*>(layers[i+1].get());
-            // Similarly do a TCP checksum calculation and update
+            // TODO: Similarly do a TCP checksum calculation and update
         }
         if (layers[i+1]->kind() == Kind::ICMP) {
         
+        }
+    }
+}
+
+void Packet::send(const uint8_t* payload) {
+    for (int i = 0; i < layers.size(); i++) {
+        if (layers[i]->kind() != Kind::ETHER) {
+            continue;
+        }
+        if (layers[i+1]->kind() == Kind::UALINK) {
+            auto* ether_layer = static_cast<ether*>(layers[i].get());
+            auto* ua_layer = static_cast<ualink*>(layers[i+1].get());
+
+            uint8_t frame[14 + 16 + 256];
+            ua_layer->calc_req_addr_attr();
+
+            memcpy(frame, ether_layer->dst.data(), 6);
+            memcpy(frame + 6, ether_layer->src.data(), 6);
+            memcpy(frame + 12, &ether_layer->ethertype, 2);
+
+            const uint8_t first_mask = (uint8_t)(ua_layer->ua_hdr.req_attr & 0x00FF);
+            const uint8_t last_mask  = (uint8_t)((ua_layer->ua_hdr.req_attr >> 8) & 0x00FF);
+
+            memcpy(frame + 14, &ua_layer->ua_hdr.ver_type, 1);
+            memcpy(frame + 15, &ua_layer->ua_hdr.op, 1);
+            memcpy(frame + 16, &ua_layer->ua_hdr.tag, 1);
+            memcpy(frame + 17, &ua_layer->ua_hdr.req_len, 1);
+            memcpy(frame + 18, &ua_layer->ua_hdr.req_attr, 2);
+            memcpy(frame + 20, &ua_layer->ua_hdr.base_addr, 8);
+            memcpy(frame + 28, &ua_layer->ua_hdr.pad, 2);
+
+            if (ua_layer->ua_hdr.op == 1) {
+                // Read - Send the `frame` as is on the wire 
+            } else if (ua_layer->ua_hdr.op == 2) {
+                // Write - Add the payload bytes to the `frame` and send on the wire 
+                memcpy(frame + 30, payload, ua_layer->num_bytes);
+            }
+            // Send the Frame bytes to IO 
         }
     }
 }

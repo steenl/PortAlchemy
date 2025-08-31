@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include "layers.h"
+#include <string.h>
 
 struct Packet {
   std::vector<std::unique_ptr<Layer>> layers;
@@ -10,6 +11,7 @@ struct Packet {
     return *this;
   }
   void update();
+  void send(const uint8_t* payload);
 };
 
 template<class P, class Q>
