@@ -12,7 +12,8 @@ enum class Kind {
   UDP,
   TCP,
   ICMP,
-  IPV6
+  IPV6,
+  UALINK
 };
 
 struct Layer {
@@ -167,5 +168,54 @@ struct tcp: Layer {
 
     int get_physical_length() override {
         return static_cast<uint16_t>(get_header_length() + payload.size());
+    }
+};
+
+struct ualink: Layer {
+    struct header {
+        uint8_t  ver_type;
+        uint8_t  op;
+        uint8_t tag;
+        uint8_t req_len;
+        uint16_t req_attr;
+        uint64_t base_addr;
+        uint16_t pad;
+    };
+
+    header ua_hdr; 
+    uint64_t user_addr;
+    uint8_t num_bytes; //payload
+
+    Kind kind() override {
+        return Kind::UALINK;
+    }
+
+    void calc_req_addr_attr() {
+        ua_hdr.base_addr = user_addr & ~0x7ULL;
+        uint16_t off  = (uint16_t)(user_addr - ua_hdr.base_addr);
+        uint16_t span = off + num_bytes;
+        uint16_t dw  = (span + 7) / 8;
+        ua_hdr.req_len = (uint8_t)(dw - 1);
+        uint32_t first_bytes = (num_bytes <= (8 - off)) ? num_bytes : (8 - off);
+        uint8_t first_mask = (first_bytes == 8 && off == 0)
+                    ? 0xFF
+                    : (uint8_t)(((1u << first_bytes) - 1u) << off);
+        uint8_t last_mask;
+        if (dw == 1) {
+            last_mask = 0;
+        } else {
+            uint32_t tail = (off + num_bytes) % 8;
+            last_mask = (tail == 0) ? 0xFF : (uint8_t)((1u << tail) - 1u);
+        }
+
+        ua_hdr.req_attr = (first_mask) | (last_mask << 8);
+    }
+
+    void set_attributes(uint64_t u_add, uint8_t payload_size, uint8_t rw, uint8_t tag) {
+        user_addr = u_add;
+        num_bytes = payload_size;
+        ua_hdr.op = rw;
+        ua_hdr.ver_type = (1u<<4) | 0;
+        ua_hdr.tag = tag;
     }
 };
