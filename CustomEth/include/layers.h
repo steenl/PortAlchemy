@@ -179,7 +179,7 @@ struct ualink: Layer {
         uint8_t req_len;
         uint16_t req_attr;
         uint64_t base_addr;
-        uint16_t pad;
+        uint16_t pad = 0;
     };
 
     header ua_hdr; 

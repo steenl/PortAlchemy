@@ -1,5 +1,13 @@
 #include "../include/packet.h"
 
+uint16_t inline swap_endian (uint16_t val) {
+    return ((val & 0xFF00) >> 8) | ((val & 0x00FF) << 8);
+}
+
+uint64_t inline swap_endian_64 (uint64_t val) {
+    return htobe64(val);
+}
+
 void Packet::update() {
     for (auto &layer : layers) {
         layer->update_checksum();
@@ -67,7 +75,7 @@ void Packet::update() {
     }
 }
 
-void Packet::send(const uint8_t* payload) {
+void Packet::send(const uint8_t* payload, RawEth sock_interface) {
     for (int i = 0; i < layers.size(); i++) {
         if (layers[i]->kind() != Kind::ETHER) {
             continue;
@@ -76,23 +84,26 @@ void Packet::send(const uint8_t* payload) {
             auto* ether_layer = static_cast<ether*>(layers[i].get());
             auto* ua_layer = static_cast<ualink*>(layers[i+1].get());
 
-            uint8_t frame[14 + 16 + 256];
+            uint8_t frame[14 + 16];
             ua_layer->calc_req_addr_attr();
 
             memcpy(frame, ether_layer->dst.data(), 6);
             memcpy(frame + 6, ether_layer->src.data(), 6);
-            memcpy(frame + 12, &ether_layer->ethertype, 2);
-
-            const uint8_t first_mask = (uint8_t)(ua_layer->ua_hdr.req_attr & 0x00FF);
-            const uint8_t last_mask  = (uint8_t)((ua_layer->ua_hdr.req_attr >> 8) & 0x00FF);
+            uint16_t ethertype_endian = swap_endian(ether_layer->ethertype);
+            memcpy(frame + 12, &ethertype_endian, 2);
 
             memcpy(frame + 14, &ua_layer->ua_hdr.ver_type, 1);
             memcpy(frame + 15, &ua_layer->ua_hdr.op, 1);
             memcpy(frame + 16, &ua_layer->ua_hdr.tag, 1);
             memcpy(frame + 17, &ua_layer->ua_hdr.req_len, 1);
-            memcpy(frame + 18, &ua_layer->ua_hdr.req_attr, 2);
-            memcpy(frame + 20, &ua_layer->ua_hdr.base_addr, 8);
-            memcpy(frame + 28, &ua_layer->ua_hdr.pad, 2);
+            uint16_t req_attr_endian = swap_endian(ua_layer->ua_hdr.req_attr);
+            memcpy(frame + 18, &req_attr_endian, 2);
+            uint64_t base_addr_endian = swap_endian_64(ua_layer->ua_hdr.base_addr);
+            memcpy(frame + 20, &base_addr_endian, 8);
+            uint16_t pad_endian = swap_endian(ua_layer->ua_hdr.pad);
+            memcpy(frame + 28, &pad_endian, 2);
+
+            std::cout << ua_layer->ua_hdr.req_attr;
 
             if (ua_layer->ua_hdr.op == 1) {
                 // Read - Send the `frame` as is on the wire 
@@ -101,6 +112,7 @@ void Packet::send(const uint8_t* payload) {
                 memcpy(frame + 30, payload, ua_layer->num_bytes);
             }
             // Send the Frame bytes to IO 
+            sock_interface.send_on_wire(frame, 30 + ua_layer->num_bytes);
         }
     }
 }
