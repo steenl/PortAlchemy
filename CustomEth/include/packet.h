@@ -3,6 +3,7 @@
 #include <memory>
 #include "layers.h"
 #include <string.h>
+#include "io.h"
 
 struct Packet {
   std::vector<std::unique_ptr<Layer>> layers;
@@ -11,7 +12,7 @@ struct Packet {
     return *this;
   }
   void update();
-  void send(const uint8_t* payload);
+  void send(const uint8_t* payload, RawEth sock_interface);
 };
 
 template<class P, class Q>
