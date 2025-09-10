@@ -103,8 +103,6 @@ void Packet::send(const uint8_t* payload, RawEth sock_interface) {
             uint16_t pad_endian = swap_endian(ua_layer->ua_hdr.pad);
             memcpy(frame + 28, &pad_endian, 2);
 
-            std::cout << ua_layer->ua_hdr.req_attr;
-
             if (ua_layer->ua_hdr.op == 1) {
                 // Read - Send the `frame` as is on the wire 
             } else if (ua_layer->ua_hdr.op == 2) {
