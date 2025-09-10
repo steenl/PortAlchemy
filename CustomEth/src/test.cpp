@@ -52,6 +52,11 @@ int main() {
     RawEth sock_interface("enp36s0");
     p_read.send(payload_read_req.data(), sock_interface);
     p_write.send(payload_write_req.data(), sock_interface);
+
+    uint8_t buf[1024];
+    while (sock_interface.recv_on_wire(buf, 1024) > 0) {
+        // Handle the buffer -> make a packet out it -> basically decode 
+    }
 }
 
 
