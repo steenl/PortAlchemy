@@ -52,6 +52,16 @@ int main() {
     RawEth sock_interface("enp36s0");
     p_read.send(payload_read_req.data(), sock_interface);
     p_write.send(payload_write_req.data(), sock_interface);
+
+    uint8_t buf[1024];
+    Packet p_response;
+    ether e_response;
+    ualink ua_response;
+    p_response = e_response / ua_response;
+    while (sock_interface.recv_on_wire(buf, 1024) > 0) {
+        // Handle the buffer -> make a packet out it -> basically decode 
+        p_response.receive(buf, sock_interface);
+    }
 }
 
 

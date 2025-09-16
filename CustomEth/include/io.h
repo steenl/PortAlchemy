@@ -5,6 +5,8 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <poll.h>
 
 class RawEth {
 public:
@@ -23,10 +25,29 @@ public:
             close(fd);
             throw std::runtime_error(std::string("bind(AF_PACKET): "));
         }
+        int flags = fcntl(fd, F_GETFL, 0);
+        fcntl(fd, F_SETFL, flags | O_NONBLOCK);
     }
 
     bool send_on_wire(const uint8_t* p, int n) {
         ssize_t r = send(fd, p, n, 0);
         return (r == static_cast<ssize_t>(n));
+    }
+
+    ssize_t recv_on_wire(uint8_t* buf, uint16_t cap) {
+        pollfd pfd;
+        pfd.fd = fd;
+        pfd.events = POLLIN;
+
+        int ret = poll(&pfd, 1, 50);
+
+        if (ret < 0) return -1;
+        if (ret == 0) return 0;
+
+        while (true) {
+            ssize_t n = recv(fd, buf, cap, 0);
+            if (n >= 0) return n;
+            return -1;
+        }
     }
 };
