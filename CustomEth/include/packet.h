@@ -13,6 +13,7 @@ struct Packet {
   }
   void update();
   void send(const uint8_t* payload, RawEth sock_interface);
+  void receive(const uint8_t* recv_frame, RawEth sock_interface);
 };
 
 template<class P, class Q>
