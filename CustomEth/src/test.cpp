@@ -95,9 +95,11 @@ int main() {
     ualink ualink_ack;
     uint8_t buf_ack[1024];
     expected_ack = ether_ack / ualink_ack;
+    // put a timeout here to break out of the loop
     while (true) {
         if (sock_interface.recv_on_wire(buf, 1024) > 0) {
             expected_ack.receive(buf_ack, sock_interface);
+            // break condition here in case the ack is actually received 
         }
     }
 }
