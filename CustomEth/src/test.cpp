@@ -62,6 +62,44 @@ int main() {
         // Handle the buffer -> make a packet out it -> basically decode 
         p_response.receive(buf, sock_interface);
     }
+
+
+    /*
+    Here we create a batch of packets to be sent out 
+    And wait for ack 
+    This is for requesting to write some payload into memory 
+    */
+
+    int counter = 10;
+    std::array<uint8_t,5> payload_write_req;
+    payload_write_req[0] = 0xFF;
+    payload_write_req[1] = 0xDD;
+    payload_write_req[2] = 0xCC;
+    payload_write_req[3] = 0xBB;
+    payload_write_req[4] = 0xAA;
+
+    for (int i = 0; i < counter; i++) {
+        Packet p_write;
+        ether test4;
+        test4.set_src_ether("aa:aa:aa:aa:aa:aa");
+        test4.set_dst_ether("aa:aa:ab:aa:aa:aa");
+        ualink test5;
+        // Write request of 5 byte payload at the 0x2000 address
+        test5.set_attributes(0x2000, payload_write_req.size(), 2, 0x10); // Write request
+        p_write = test4 / test5;
+        p_write.send(payload_write_req.data(), sock_interface);
+    }
+
+    Packet expected_ack;
+    ether ether_ack;
+    ualink ualink_ack;
+    uint8_t buf_ack[1024];
+    expected_ack = ether_ack / ualink_ack;
+    while (true) {
+        if (sock_interface.recv_on_wire(buf, 1024) > 0) {
+            expected_ack.receive(buf_ack, sock_interface);
+        }
+    }
 }
 
 
