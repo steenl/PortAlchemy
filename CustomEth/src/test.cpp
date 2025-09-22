@@ -1,69 +1,9 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include "../include/packet.h"
+#include "../include/fpga_interface.h"
 
 int main() {
-    ether test1;
-    test1.set_src_ether("aa:aa:aa:aa:aa:aa");
-    test1.set_dst_ether("aa:aa:ab:aa:aa:aa");
-
-    ipv4 test2;
-    test2.set_src_ipv4("127.0.0.1");
-    test2.set_dst_ipv4("127.1.1.1");
-
-    udp test3;
-    test3.set_source_port("127");
-    test3.set_dest_port("128");
-    test3.payload.push_back(0xF);
-
-    Packet p;
-    p = test1 / test2 / test3;
-    p.update();
-
-    // Build a ETHER + UALINK packet 
-    Packet p_write;
-    ether test4;
-    test4.set_src_ether("aa:aa:aa:aa:aa:aa");
-    test4.set_dst_ether("aa:aa:ab:aa:aa:aa");
-
-    std::array<uint8_t,5> payload_write_req;
-    payload_write_req[0] = 0xFF;
-    payload_write_req[1] = 0xDD;
-    payload_write_req[2] = 0xCC;
-    payload_write_req[3] = 0xBB;
-    payload_write_req[4] = 0xAA;
-
-    ualink test5;
-    // Write request of 5 byte payload at the 0x2000 address
-    test5.set_attributes(0x2000, payload_write_req.size(), 2, 0x10); // Write request
-    p_write = test4 / test5;
-
-    Packet p_read;
-    std::array<uint8_t,2> payload_read_req;
-    payload_read_req[0] = 0xFF; // dummy filled
-    payload_read_req[1] = 0xFF; // dummy filled
-    ualink test6;
-
-    // Read request at the 0x2000 address 
-    test6.set_attributes(0x2000, payload_read_req.size(), 1, 0x10); // Read request
-    p_read = test4 / test6;
-
-    RawEth sock_interface("enp36s0");
-    p_read.send(payload_read_req.data(), sock_interface);
-    p_write.send(payload_write_req.data(), sock_interface);
-
-    uint8_t buf[1024];
-    Packet p_response;
-    ether e_response;
-    ualink ua_response;
-    p_response = e_response / ua_response;
-    while (sock_interface.recv_on_wire(buf, 1024) > 0) {
-        // Handle the buffer -> make a packet out it -> basically decode 
-        p_response.receive(buf, sock_interface);
-    }
-
-
     /*
     Here we create a batch of packets to be sent out 
     And wait for ack 
@@ -77,6 +17,8 @@ int main() {
     payload_write_req[2] = 0xCC;
     payload_write_req[3] = 0xBB;
     payload_write_req[4] = 0xAA;
+    RawEth sock_interface("enp36s0");
+    uint8_t frame[14 + 16 + 230];
 
     for (int i = 0; i < counter; i++) {
         Packet p_write;
@@ -87,18 +29,20 @@ int main() {
         // Write request of 5 byte payload at the 0x2000 address
         test5.set_attributes(0x2000, payload_write_req.size(), 2, 0x10); // Write request
         p_write = test4 / test5;
-        p_write.send(payload_write_req.data(), sock_interface);
+        int bytes_to_send = 0;
+        p_write.prepare_send(payload_write_req.data(), frame, bytes_to_send);
+        sock_interface.send_on_wire(frame, bytes_to_send);
     }
 
     Packet expected_ack;
     ether ether_ack;
     ualink ualink_ack;
-    uint8_t buf_ack[1024];
+    uint8_t buf_ack[256];
     expected_ack = ether_ack / ualink_ack;
     // put a timeout here to break out of the loop
     while (true) {
-        if (sock_interface.recv_on_wire(buf, 1024) > 0) {
-            expected_ack.receive(buf_ack, sock_interface);
+        if (sock_interface.recv_on_wire(buf_ack, 256) > 0) {
+            expected_ack.prepare_packet_recv(buf_ack);
             // break condition here in case the ack is actually received 
         }
     }
