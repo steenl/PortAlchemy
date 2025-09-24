@@ -1,3 +1,4 @@
+
 /*******************************************************************************
  *
  *
@@ -274,8 +275,8 @@ module ualink_turbo64
 	reg [DPDATA_WIDTH-1:0]               din_a;
 	reg [DPDATA_WIDTH-1:0]               dout_a;
 	reg we_b;
-	wire [DPADDR_WIDTH-1:0]               addr_b;
-	wire [DPDATA_WIDTH-1:0]               din_b;
+	reg [DPADDR_WIDTH-1:0]               addr_b;
+	reg [DPDATA_WIDTH-1:0]               din_b;
 	reg [DPDATA_WIDTH-1:0]               dout_b;
 
    // ------------ Modules -------------
@@ -371,17 +372,7 @@ module ualink_turbo64
               if(m_axis_tready) begin
                  state_next = WR_PKT;
                  rd_en[cur_queue] = 1;
-					  // check for write memory cmd using mask of cmd bits
-					  if ((m_axis_tdata & 256'h00000000000000000000000000000000000000000000FF00) == 
-					  256'h00000000000000000000000000000000000000000000AB00) begin
-					    we_a <= 1;
-						 addr_a <= 8'h0;
-					    din_a <= m_axis_tdata[63:0];
-					  end
-					  else begin
-					    we_a <= 0;
-				     end
-					end
+            end
            end
            else begin
               cur_queue_next = cur_queue_plus1;
@@ -399,7 +390,19 @@ module ualink_turbo64
            /* otherwise read and write as usual */
            else if (m_axis_tready & !empty[cur_queue]) begin
               rd_en[cur_queue] = 1;
-           end
+            		  // check for write memory cmd using mask of cmd bits
+                      if ((m_axis_tdata[15:8]) ==  8'hEF) begin
+                      //force any data into DPram
+                      //if(1) begin
+					    we_a <= 1;
+						addr_a <= 8'h0;
+					    din_a <= m_axis_tdata[63:0];
+					  end
+					  else begin
+					    we_a <= 0;
+				     end
+					end
+        
         end // case: WR_PKT
 
       endcase // case(state)
@@ -492,21 +495,21 @@ always @(*) LED03 = led_reg;
 // module dual_port_ram_8x64 #(
 
 /*)(
-    // Port A
-    input  wire                     axi_aclk,
-    input  wire                     axi_resetn,      // enable for port A (active high)
-    input  wire                     we_a,      // write enable for port A (active high)
-    input  wire [ADDR_WIDTH-1:0]    addr_a,
-    input  wire [DATA_WIDTH-1:0]    din_a,
-    output reg  [DATA_WIDTH-1:0]    dout_a,
+Â  Â  // Port A
+Â  Â  input Â wire Â  Â  Â  Â  Â  Â  Â  Â  Â  Â  axi_aclk,
+Â  Â  input Â wire Â  Â  Â  Â  Â  Â  Â  Â  Â  Â  axi_resetn, Â  Â  Â // enable for port A (active high)
+Â  Â  input Â wire Â  Â  Â  Â  Â  Â  Â  Â  Â  Â  we_a, Â  Â  Â // write enable for port A (active high)
+Â  Â  input Â wire [ADDR_WIDTH-1:0] Â  Â addr_a,
+Â  Â  input Â wire [DATA_WIDTH-1:0] Â  Â din_a,
+Â  Â  output reg Â [DATA_WIDTH-1:0] Â  Â dout_a,
 
-    // Port B
-    input  wire                     axi_aclk,
-    input  wire                     axi_resetn,      // enable for port B (active high)
-    input  wire                     we_b,      // write enable for port B (active high)
-    input  wire [ADDR_WIDTH-1:0]    addr_b,
-    input  wire [DATA_WIDTH-1:0]    din_b,
-    output reg  [DATA_WIDTH-1:0]    dout_b
+Â  Â  // Port B
+Â  Â  input Â wire Â  Â  Â  Â  Â  Â  Â  Â  Â  Â  axi_aclk,
+Â  Â  input Â wire Â  Â  Â  Â  Â  Â  Â  Â  Â  Â  axi_resetn, Â  Â  Â // enable for port B (active high)
+Â  Â  input Â wire Â  Â  Â  Â  Â  Â  Â  Â  Â  Â  we_b, Â  Â  Â // write enable for port B (active high)
+Â  Â  input Â wire [ADDR_WIDTH-1:0] Â  Â addr_b,
+Â  Â  input Â wire [DATA_WIDTH-1:0] Â  Â din_b,
+Â  Â  output reg Â [DATA_WIDTH-1:0] Â  Â dout_b
 );*/
 
 
@@ -517,7 +520,19 @@ reg [DPDATA_WIDTH-1:0] dpmem [0:DPDEPTH-1];
 // Port A logic (synchronous)
 // Write-first behavior: when a write occurs on port A, dout_a returns the written data immediately.
   always @(posedge axi_aclk) begin
-    if (axi_resetn) begin
+    if (!axi_resetn) begin  //initialize memory at reset
+        dout_a <= 0;
+        we_a   <= 0;
+        addr_a <= 0;
+        din_a  <= 0;
+        dout_b <= 0;
+        we_b   <= 0;
+        addr_b <= 0;
+        din_b  <= 0;
+        // for (i=0; i<DEPTH; i=i+1) begin
+        //     mem[i] <= 0;
+        // end
+      end else begin
       if (we_a) begin
          dpmem[addr_a] <= din_a;
          dout_a <= din_a;  // write-first: read returns new data
