@@ -85,6 +85,10 @@ module ualink_turbo64
     input  s_axis_tlast_4,
          // LEDs and debug outputs
     output reg                           LED03,
+
+    output reg CS_we_a,
+    output reg CS_addr_a0,
+    output reg CS_din_a0,
 	 output reg CS_m_axis_tvalid,
 	 output reg CS_m_axis_tready,
 	 output reg CS_m_axis_tlast,
@@ -360,8 +364,7 @@ module ualink_turbo64
       state_next      = state;
       cur_queue_next  = cur_queue;
       rd_en           = 0;
-	//	we_a            = 0;
-
+	
       case(state)
 
         /* cycle between input queues until one is not empty */
@@ -433,6 +436,9 @@ always @(posedge axi_aclk) begin
         end
     end
             // Debug outputs need to be in an clock defined always.
+    CS_we_a <= we_a;
+    CS_addr_a0 <= addr_a[0];
+    CS_din_a0 <= din_a[0];
 			CS_m_axis_tvalid <= m_axis_tvalid;
 			CS_m_axis_tready <= m_axis_tready;
 			CS_m_axis_tlast  <= m_axis_tlast;
@@ -522,9 +528,9 @@ reg [DPDATA_WIDTH-1:0] dpmem [0:DPDEPTH-1];
   always @(posedge axi_aclk) begin
     if (!axi_resetn) begin  //initialize memory at reset
         dout_a <= 0;
-        we_a   <= 0;
+        //we_a   <= 0;
         addr_a <= 0;
-        din_a  <= 0;
+        //din_a  <= 0;
         dout_b <= 0;
         we_b   <= 0;
         addr_b <= 0;
