@@ -28,7 +28,6 @@ module ualink_turbo64
     parameter C_M_AXIS_TUSER_WIDTH=128,
     parameter C_S_AXIS_TUSER_WIDTH=128,
     parameter NUM_QUEUES=5,
-	 
     parameter DPADDR_WIDTH = 8,
     parameter DPDATA_WIDTH = 64,
     parameter DPDEPTH = (1 << DPADDR_WIDTH)
@@ -85,10 +84,6 @@ module ualink_turbo64
     input  s_axis_tlast_4,
          // LEDs and debug outputs
     output reg                           LED03,
-
-    output reg CS_we_a,
-    output reg CS_addr_a0,
-    output reg CS_din_a0,
 	 output reg CS_m_axis_tvalid,
 	 output reg CS_m_axis_tready,
 	 output reg CS_m_axis_tlast,
@@ -364,7 +359,8 @@ module ualink_turbo64
       state_next      = state;
       cur_queue_next  = cur_queue;
       rd_en           = 0;
-	
+	//	we_a            = 0;
+
       case(state)
 
         /* cycle between input queues until one is not empty */
@@ -410,7 +406,7 @@ module ualink_turbo64
 
       endcase // case(state)
    end // always @ (*)
-
+//advance state machine regs
    always @(posedge axi_aclk) begin
       if(~axi_resetn) begin
          state <= IDLE;
@@ -422,7 +418,7 @@ module ualink_turbo64
       end
    end
 
-      // LED logic (blinky)  Need two sensitivities to force meeting timing
+      // LED logic (blinky)  Need two sensitivities to force meeting 100MHz timing
 always @(posedge axi_aclk) begin
     if (!axi_resetn) begin
         ledcnt  <= 0;
@@ -436,9 +432,6 @@ always @(posedge axi_aclk) begin
         end
     end
             // Debug outputs need to be in an clock defined always.
-    CS_we_a <= we_a;
-    CS_addr_a0 <= addr_a[0];
-    CS_din_a0 <= din_a[0];
 			CS_m_axis_tvalid <= m_axis_tvalid;
 			CS_m_axis_tready <= m_axis_tready;
 			CS_m_axis_tlast  <= m_axis_tlast;
@@ -495,72 +488,4 @@ end
 always @(*) LED03 = led_reg;
 
 
-// endmodule
-
-
-// module dual_port_ram_8x64 #(
-
-/*)(
-    // Port A
-    input  wire                     axi_aclk,
-    input  wire                     axi_resetn,      // enable for port A (active high)
-    input  wire                     we_a,      // write enable for port A (active high)
-    input  wire [ADDR_WIDTH-1:0]    addr_a,
-    input  wire [DATA_WIDTH-1:0]    din_a,
-    output reg  [DATA_WIDTH-1:0]    dout_a,
-
-    // Port B
-    input  wire                     axi_aclk,
-    input  wire                     axi_resetn,      // enable for port B (active high)
-    input  wire                     we_b,      // write enable for port B (active high)
-    input  wire [ADDR_WIDTH-1:0]    addr_b,
-    input  wire [DATA_WIDTH-1:0]    din_b,
-    output reg  [DATA_WIDTH-1:0]    dout_b
-);*/
-
-
-// Memory declaration
-reg [DPDATA_WIDTH-1:0] dpmem [0:DPDEPTH-1];
-// Optional synthesis attribute for inferred block RAM (vendor-specific)
-// (* ram_style = "block" *) reg [DATA_WIDTH-1:0] mem [0:DEPTH-1];
-// Port A logic (synchronous)
-// Write-first behavior: when a write occurs on port A, dout_a returns the written data immediately.
-  always @(posedge axi_aclk) begin
-    if (!axi_resetn) begin  //initialize memory at reset
-        dout_a <= 0;
-        //we_a   <= 0;
-        addr_a <= 0;
-        //din_a  <= 0;
-        dout_b <= 0;
-        we_b   <= 0;
-        addr_b <= 0;
-        din_b  <= 0;
-        // for (i=0; i<DEPTH; i=i+1) begin
-        //     mem[i] <= 0;
-        // end
-      end else begin
-      if (we_a) begin
-         dpmem[addr_a] <= din_a;
-         dout_a <= din_a;  // write-first: read returns new data
-         end else begin
-         dout_a <= dpmem[addr_a];    // synchronous read
-         end
-      end
-    end
-	 // Port B logic (synchronous)
-  // Write-first behavior on port B as well.
-  always @(posedge axi_aclk) begin
-    if (axi_resetn) begin
-      if (we_b) begin
-        dpmem[addr_b] <= din_b;
-        dout_b <= din_b;
-      end else begin
-        dout_b <= dpmem[addr_b];
-        end
-		end
-  end
-// Notes:
-// - If both ports write the same address in the same cycle (in the same or different clocks), the final value is implementation-dependent / undefined.
-// - To infer true dual-port block RAM on your FPGA, check vendor guidance (attributes or IP generator). The commented ram_style attribute is supported by some toolchains.
-// - If you prefer read-first behavior, set dout <= mem[addr] before mem[addr] <= din (change assignment order in the write branch).
 endmodule
