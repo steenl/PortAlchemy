@@ -12,7 +12,7 @@ public:
     std::string src_mac;
     std::string dst_mac;
 
-    bool send_batch_wait_ack (std::vector<std::array<uint8_t,28>>& payload_vec, uint64_t mem_addr, uint8_t op, uint8_t tag) {
+    bool send_batch_wait_ack (std::vector<std::array<uint8_t,226>>& payload_vec, uint64_t mem_addr, uint8_t op, uint8_t tag) {
         for (int i = 0; i < payload_vec.size(); i++) {
             Packet p_send;
             ether e_header;
