@@ -20,6 +20,7 @@ public:
         sock_addr.sll_family   = AF_PACKET;
         sock_addr.sll_ifindex  = static_cast<int>(if_index);
         sock_addr.sll_protocol = htons(ETH_P_ALL);
+        std::cout << "Initializing the socket \n";
 
         if (bind(fd, reinterpret_cast<sockaddr*>(&sock_addr), sizeof(sock_addr)) < 0) {
             close(fd);
@@ -34,20 +35,22 @@ public:
         return (r == static_cast<ssize_t>(n));
     }
 
-    ssize_t recv_on_wire(uint8_t* buf, uint16_t cap) {
+    bool recv_on_wire(uint8_t* buf, uint16_t cap) {
         pollfd pfd;
         pfd.fd = fd;
         pfd.events = POLLIN;
 
-        int ret = poll(&pfd, 1, 50);
+        int ret = poll(&pfd, 1, 10);
 
-        if (ret < 0) return -1;
-        if (ret == 0) return 0;
-
-        while (true) {
-            ssize_t n = recv(fd, buf, cap, 0);
-            if (n >= 0) return n;
-            return -1;
+        if (ret < 0 || ret == 0) {
+            return false;
         }
+
+        if (ret > 0) {
+            ssize_t n = recv(fd, buf, cap, 0);
+            if (n >= 0) return true;
+            return false;
+        }
+        return false;
     }
 };
