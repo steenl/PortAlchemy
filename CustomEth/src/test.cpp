@@ -1,72 +1,31 @@
-#include <iostream>
-#include <memory>
-#include <vector>
-#include "../include/packet.h"
+#include "../include/fpga_interface.h"
 
 int main() {
-    ether test1;
-    test1.set_src_ether("aa:aa:aa:aa:aa:aa");
-    test1.set_dst_ether("aa:aa:ab:aa:aa:aa");
+    /*
+    Here we create a batch of packets to be sent out 
+    And wait for ack 
+    This is for requesting to write some payload into memory 
+    */
 
-    ipv4 test2;
-    test2.set_src_ipv4("127.0.0.1");
-    test2.set_dst_ipv4("127.1.1.1");
+    /*
+    Create all the payloads to be sent here 
+    Add them to a vector 
+    Initiate it to be sent through the interface class 
+    socket interface, Packet creation, src/dst mac addresses - members of the fpga interface
 
-    udp test3;
-    test3.set_source_port("127");
-    test3.set_dest_port("128");
-    test3.payload.push_back(0xF);
+    // we are limited to 226 bytes on the payload 
+    // 14 + 16 bytes for the ether + ualink headers 
+    */
+    FPGAInterface fpg_int("enp36s0", "aa:aa:aa:aa:aa:aa", "aa:aa:ab:aa:aa:aa");
 
-    Packet p;
-    p = test1 / test2 / test3;
-    p.update();
+    std::array<uint8_t,28> payload_write_req_1 = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99};
+    std::array<uint8_t,28> payload_write_req_2 = {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19};
+    std::array<uint8_t,28> payload_write_req_3 = {0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29};
 
-    // Build a ETHER + UALINK packet 
-    Packet p_write;
-    ether test4;
-    test4.set_src_ether("aa:aa:aa:aa:aa:aa");
-    test4.set_dst_ether("aa:aa:ab:aa:aa:aa");
+    std::vector<std::array<uint8_t,28>> payload_batch;
+    payload_batch.push_back(payload_write_req_1);
+    payload_batch.push_back(payload_write_req_2);
+    payload_batch.push_back(payload_write_req_3);
 
-    std::array<uint8_t,5> payload_write_req;
-    payload_write_req[0] = 0xFF;
-    payload_write_req[1] = 0xDD;
-    payload_write_req[2] = 0xCC;
-    payload_write_req[3] = 0xBB;
-    payload_write_req[4] = 0xAA;
-
-    ualink test5;
-    // Write request of 5 byte payload at the 0x2000 address
-    test5.set_attributes(0x2000, payload_write_req.size(), 2, 0x10); // Write request
-    p_write = test4 / test5;
-
-    Packet p_read;
-    std::array<uint8_t,2> payload_read_req;
-    payload_read_req[0] = 0xFF; // dummy filled
-    payload_read_req[1] = 0xFF; // dummy filled
-    ualink test6;
-
-    // Read request at the 0x2000 address 
-    test6.set_attributes(0x2000, payload_read_req.size(), 1, 0x10); // Read request
-    p_read = test4 / test6;
-
-    RawEth sock_interface("enp36s0");
-    p_read.send(payload_read_req.data(), sock_interface);
-    p_write.send(payload_write_req.data(), sock_interface);
-
-    uint8_t buf[1024];
-    Packet p_response;
-    ether e_response;
-    ualink ua_response;
-    p_response = e_response / ua_response;
-    while (sock_interface.recv_on_wire(buf, 1024) > 0) {
-        // Handle the buffer -> make a packet out it -> basically decode 
-        p_response.receive(buf, sock_interface);
-    }
+    fpg_int.send_batch_wait_ack(payload_batch, 0x2000, 2, 0x10);
 }
-
-
-/*
-1. Add test functions to cross-check the actual bytes generated 
-2. Right now can handle UDP or TCP or ICMP ONLY (with the ether and IPv4 layers) - Need to add a stack up layered sender ? just needs different handling at the packet level 
-3. Add UA Link packet layers just like the current implemented ones 
-*/
