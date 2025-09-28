@@ -75,7 +75,7 @@ void Packet::update() {
     }
 }
 
-void Packet::send(const uint8_t* payload, RawEth sock_interface) {
+void Packet::prepare_send (const uint8_t* payload, uint8_t* frame, int& bytes_to_send) {
     for (int i = 0; i < layers.size(); i++) {
         if (layers[i]->kind() != Kind::ETHER) {
             continue;
@@ -84,7 +84,7 @@ void Packet::send(const uint8_t* payload, RawEth sock_interface) {
             auto* ether_layer = static_cast<ether*>(layers[i].get());
             auto* ua_layer = static_cast<ualink*>(layers[i+1].get());
 
-            uint8_t frame[14 + 16];
+            //uint8_t frame[14 + 16];
             ua_layer->calc_req_addr_attr();
 
             memcpy(frame, ether_layer->dst.data(), 6);
@@ -105,17 +105,17 @@ void Packet::send(const uint8_t* payload, RawEth sock_interface) {
 
             if (ua_layer->ua_hdr.op == 1) {
                 // Read - Send the `frame` as is on the wire 
+                bytes_to_send = 30;
             } else if (ua_layer->ua_hdr.op == 2) {
                 // Write - Add the payload bytes to the `frame` and send on the wire 
                 memcpy(frame + 30, payload, ua_layer->num_bytes);
+                bytes_to_send = 30 + ua_layer->num_bytes;
             }
-            // Send the Frame bytes to IO 
-            sock_interface.send_on_wire(frame, 30 + ua_layer->num_bytes);
         }
     }
 }
 
-void Packet::receive (const uint8_t* recv_frame, RawEth sock_interface) {
+void Packet::prepare_packet_recv (const uint8_t* recv_frame) {
     for (int i = 0; i < layers.size(); i++) {
         if (layers[i]->kind() == Kind::ETHER) {
             auto* ether_layer = static_cast<ether*>(layers[i].get());
@@ -124,7 +124,6 @@ void Packet::receive (const uint8_t* recv_frame, RawEth sock_interface) {
             memcpy(&ether_layer->ethertype, recv_frame + 12, 2);
         } else if (layers[i]->kind() == Kind::UALINK) {
             auto* ua_layer = static_cast<ualink*>(layers[i].get());
-
             memcpy(&ua_layer->ua_hdr.ver_type, recv_frame + 14, 1);
             memcpy(&ua_layer->ua_hdr.op, recv_frame + 15, 1);
             memcpy(&ua_layer->ua_hdr.tag, recv_frame + 16, 1);
@@ -132,8 +131,6 @@ void Packet::receive (const uint8_t* recv_frame, RawEth sock_interface) {
             memcpy(&ua_layer->ua_hdr.req_attr, recv_frame + 18, 2);
             memcpy(&ua_layer->ua_hdr.base_addr, recv_frame + 20, 8);
             memcpy(&ua_layer->ua_hdr.pad, recv_frame + 28, 2);
-            // copy over the payload here to do something useful
-            std::cout << "received ualink header with base_addr: " << ua_layer->ua_hdr.base_addr;
         }
     }
 }
