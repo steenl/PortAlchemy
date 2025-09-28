@@ -32,7 +32,7 @@ struct Layer {
 };
 
 struct ether: Layer {
-    uint16_t ethertype{0x0800};
+    uint16_t ethertype{0x88B5};
     std::array<uint8_t, 6> src{}, dst{};
 
     void set_src_ether (const std::string& src_mac) {
