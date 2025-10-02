@@ -83,6 +83,9 @@ module ualink_turbo64
     input  s_axis_tlast_4,
          // LEDs and debug outputs
     output reg LED03,
+	 output reg CS_we_a,
+	 output reg CS_addr_a0,
+	 output reg CS_din_a0,
 	 output reg CS_m_axis_tvalid,
 	 output reg CS_m_axis_tready,
 	 output reg CS_m_axis_tlast,
