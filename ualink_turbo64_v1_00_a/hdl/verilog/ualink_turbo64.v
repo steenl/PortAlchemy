@@ -1,9 +1,8 @@
 
 /*******************************************************************************
- *
+ *  Steen Larsen 2025
  *
  *  Licence:
- *        This file is part of the NetFPGA 10G development base package.
  *
  *        This file is free code: you can redistribute it and/or modify it under
  *        the terms of the GNU Lesser General Public License version 2.1 as
@@ -83,142 +82,14 @@ module ualink_turbo64
     output s_axis_tready_4,
     input  s_axis_tlast_4,
          // LEDs and debug outputs
-    output reg                           LED03,
+    output reg LED03,
 	 output reg CS_m_axis_tvalid,
 	 output reg CS_m_axis_tready,
 	 output reg CS_m_axis_tlast,
 	 output reg CS_s_axis_tvalid_0,
 	 output reg CS_s_axis_tready_0,
 	 output reg CS_s_axis_tlast_0,	 
-    output reg                           CS_M_AXIS_TDATA0,
-    output reg                           CS_M_AXIS_TDATA1,
-    output reg                           CS_M_AXIS_TDATA2,
-    output reg                           CS_M_AXIS_TDATA3,
-    output reg                           CS_M_AXIS_TDATA4,
-    output reg                           CS_M_AXIS_TDATA5,
-    output reg                           CS_M_AXIS_TDATA6,
-    output reg                           CS_M_AXIS_TDATA7,
-    output reg                           CS_M_AXIS_TDATA8,
-    output reg                           CS_M_AXIS_TDATA9,
-    output reg                           CS_M_AXIS_TDATA10,
-    output reg                           CS_M_AXIS_TDATA11,
-    output reg                           CS_M_AXIS_TDATA12,
-    output reg                           CS_M_AXIS_TDATA13,
-    output reg                           CS_M_AXIS_TDATA14,
-    output reg                           CS_M_AXIS_TDATA15,
-    output reg                           CS_M_AXIS_TDATA16,
-    output reg                           CS_M_AXIS_TDATA17,
-    output reg                           CS_M_AXIS_TDATA18,
-    output reg                           CS_M_AXIS_TDATA19,
-    output reg                           CS_M_AXIS_TDATA20,
-    output reg                           CS_M_AXIS_TDATA21,
-    output reg                           CS_M_AXIS_TDATA22,
-    output reg                           CS_M_AXIS_TDATA23,
-    output reg                           CS_M_AXIS_TDATA24,
-    output reg                           CS_M_AXIS_TDATA25,
-    output reg                           CS_M_AXIS_TDATA26,
-    output reg                           CS_M_AXIS_TDATA27,
-    output reg                           CS_M_AXIS_TDATA28,
-    output reg                           CS_M_AXIS_TDATA29,
-    output reg                           CS_M_AXIS_TDATA30,
-    output reg                           CS_M_AXIS_TDATA31,
-    output reg                           CS_M_AXIS_TDATA32,
-    output reg                           CS_M_AXIS_TDATA33,
-    output reg                           CS_M_AXIS_TDATA34,
-    output reg                           CS_M_AXIS_TDATA35,
-    output reg                           CS_M_AXIS_TDATA36,
-    output reg                           CS_M_AXIS_TDATA37,
-    output reg                           CS_M_AXIS_TDATA38,
-    output reg                           CS_M_AXIS_TDATA39,
-    output reg                           CS_M_AXIS_TDATA40,
-    output reg                           CS_M_AXIS_TDATA41,
-    output reg                           CS_M_AXIS_TDATA42,
-    output reg                           CS_M_AXIS_TDATA43,
-    output reg                           CS_M_AXIS_TDATA44,
-    output reg                           CS_M_AXIS_TDATA45,
-    output reg                           CS_M_AXIS_TDATA46,
-    output reg                           CS_M_AXIS_TDATA47,
-    output reg                           CS_M_AXIS_TDATA48,
-    output reg                           CS_M_AXIS_TDATA49,
-    output reg                           CS_M_AXIS_TDATA50,
-    output reg                           CS_M_AXIS_TDATA51,
-    output reg                           CS_M_AXIS_TDATA52,
-    output reg                           CS_M_AXIS_TDATA53,
-    output reg                           CS_M_AXIS_TDATA54,
-    output reg                           CS_M_AXIS_TDATA55,
-    output reg                           CS_M_AXIS_TDATA56,
-    output reg                           CS_M_AXIS_TDATA57,
-    output reg                           CS_M_AXIS_TDATA58,
-    output reg                           CS_M_AXIS_TDATA59,
-    output reg                           CS_M_AXIS_TDATA60,
-    output reg                           CS_M_AXIS_TDATA61,
-    output reg                           CS_M_AXIS_TDATA62,
-    output reg                           CS_M_AXIS_TDATA63,
-     output reg                           CS_S_AXIS_TDATA0,
-    output reg                           CS_S_AXIS_TDATA1,
-    output reg                           CS_S_AXIS_TDATA2,
-    output reg                           CS_S_AXIS_TDATA3,
-    output reg                           CS_S_AXIS_TDATA4,
-    output reg                           CS_S_AXIS_TDATA5,
-    output reg                           CS_S_AXIS_TDATA6,
-    output reg                           CS_S_AXIS_TDATA7,
-    output reg                           CS_S_AXIS_TDATA8,
-    output reg                           CS_S_AXIS_TDATA9,
-    output reg                           CS_S_AXIS_TDATA10,
-    output reg                           CS_S_AXIS_TDATA11,
-    output reg                           CS_S_AXIS_TDATA12,
-    output reg                           CS_S_AXIS_TDATA13,
-    output reg                           CS_S_AXIS_TDATA14,
-    output reg                           CS_S_AXIS_TDATA15,
-    output reg                           CS_S_AXIS_TDATA16,
-    output reg                           CS_S_AXIS_TDATA17,
-    output reg                           CS_S_AXIS_TDATA18,
-    output reg                           CS_S_AXIS_TDATA19,
-    output reg                           CS_S_AXIS_TDATA20,
-    output reg                           CS_S_AXIS_TDATA21,
-    output reg                           CS_S_AXIS_TDATA22,
-    output reg                           CS_S_AXIS_TDATA23,
-    output reg                           CS_S_AXIS_TDATA24,
-    output reg                           CS_S_AXIS_TDATA25,
-    output reg                           CS_S_AXIS_TDATA26,
-    output reg                           CS_S_AXIS_TDATA27,
-    output reg                           CS_S_AXIS_TDATA28,
-    output reg                           CS_S_AXIS_TDATA29,
-    output reg                           CS_S_AXIS_TDATA30,
-    output reg                           CS_S_AXIS_TDATA31,
-    output reg                           CS_S_AXIS_TDATA32,
-    output reg                           CS_S_AXIS_TDATA33,
-    output reg                           CS_S_AXIS_TDATA34,
-    output reg                           CS_S_AXIS_TDATA35,
-    output reg                           CS_S_AXIS_TDATA36,
-    output reg                           CS_S_AXIS_TDATA37,
-    output reg                           CS_S_AXIS_TDATA38,
-    output reg                           CS_S_AXIS_TDATA39,
-    output reg                           CS_S_AXIS_TDATA40,
-    output reg                           CS_S_AXIS_TDATA41,
-    output reg                           CS_S_AXIS_TDATA42,
-    output reg                           CS_S_AXIS_TDATA43,
-    output reg                           CS_S_AXIS_TDATA44,
-    output reg                           CS_S_AXIS_TDATA45,
-    output reg                           CS_S_AXIS_TDATA46,
-    output reg                           CS_S_AXIS_TDATA47,
-    output reg                           CS_S_AXIS_TDATA48,
-    output reg                           CS_S_AXIS_TDATA49,
-    output reg                           CS_S_AXIS_TDATA50,
-    output reg                           CS_S_AXIS_TDATA51,
-    output reg                           CS_S_AXIS_TDATA52,
-    output reg                           CS_S_AXIS_TDATA53,
-    output reg                           CS_S_AXIS_TDATA54,
-    output reg                           CS_S_AXIS_TDATA55,
-    output reg                           CS_S_AXIS_TDATA56,
-    output reg                           CS_S_AXIS_TDATA57,
-    output reg                           CS_S_AXIS_TDATA58,
-    output reg                           CS_S_AXIS_TDATA59,
-    output reg                           CS_S_AXIS_TDATA60,
-    output reg                           CS_S_AXIS_TDATA61,
-    output reg                           CS_S_AXIS_TDATA62,
-    output reg                           CS_S_AXIS_TDATA63
-);
+    output reg CS_M_AXIS_TDATA0, CS_M_AXIS_TDATA1, CS_M_AXIS_TDATA2, CS_M_AXIS_TDATA3, CS_M_AXIS_TDATA4, CS_M_AXIS_TDATA5, CS_M_AXIS_TDATA6, CS_M_AXIS_TDATA7, CS_M_AXIS_TDATA8, CS_M_AXIS_TDATA9, CS_M_AXIS_TDATA10, CS_M_AXIS_TDATA11, CS_M_AXIS_TDATA12, CS_M_AXIS_TDATA13, CS_M_AXIS_TDATA14, CS_M_AXIS_TDATA15, CS_M_AXIS_TDATA16, CS_M_AXIS_TDATA17, CS_M_AXIS_TDATA18, CS_M_AXIS_TDATA19, CS_M_AXIS_TDATA20, CS_M_AXIS_TDATA21, CS_M_AXIS_TDATA22, CS_M_AXIS_TDATA23, CS_M_AXIS_TDATA24, CS_M_AXIS_TDATA25, CS_M_AXIS_TDATA26, CS_M_AXIS_TDATA27, CS_M_AXIS_TDATA28, CS_M_AXIS_TDATA29, CS_M_AXIS_TDATA30, CS_M_AXIS_TDATA31, CS_M_AXIS_TDATA32, CS_M_AXIS_TDATA33, CS_M_AXIS_TDATA34, CS_M_AXIS_TDATA35, CS_M_AXIS_TDATA36, CS_M_AXIS_TDATA37, CS_M_AXIS_TDATA38, CS_M_AXIS_TDATA39, CS_M_AXIS_TDATA40, CS_M_AXIS_TDATA41, CS_M_AXIS_TDATA42, CS_M_AXIS_TDATA43, CS_M_AXIS_TDATA44, CS_M_AXIS_TDATA45, CS_M_AXIS_TDATA46, CS_M_AXIS_TDATA47, CS_M_AXIS_TDATA48, CS_M_AXIS_TDATA49, CS_M_AXIS_TDATA50, CS_M_AXIS_TDATA51, CS_M_AXIS_TDATA52, CS_M_AXIS_TDATA53, CS_M_AXIS_TDATA54, CS_M_AXIS_TDATA55, CS_M_AXIS_TDATA56, CS_M_AXIS_TDATA57, CS_M_AXIS_TDATA58, CS_M_AXIS_TDATA59, CS_M_AXIS_TDATA60, CS_M_AXIS_TDATA61, CS_M_AXIS_TDATA62, CS_M_AXIS_TDATA63,  CS_S_AXIS_TDATA0, CS_S_AXIS_TDATA1, CS_S_AXIS_TDATA2, CS_S_AXIS_TDATA3, CS_S_AXIS_TDATA4, CS_S_AXIS_TDATA5, CS_S_AXIS_TDATA6, CS_S_AXIS_TDATA7, CS_S_AXIS_TDATA8, CS_S_AXIS_TDATA9, CS_S_AXIS_TDATA10, CS_S_AXIS_TDATA11, CS_S_AXIS_TDATA12, CS_S_AXIS_TDATA13, CS_S_AXIS_TDATA14, CS_S_AXIS_TDATA15, CS_S_AXIS_TDATA16, CS_S_AXIS_TDATA17, CS_S_AXIS_TDATA18, CS_S_AXIS_TDATA19, CS_S_AXIS_TDATA20, CS_S_AXIS_TDATA21, CS_S_AXIS_TDATA22, CS_S_AXIS_TDATA23, CS_S_AXIS_TDATA24, CS_S_AXIS_TDATA25, CS_S_AXIS_TDATA26, CS_S_AXIS_TDATA27, CS_S_AXIS_TDATA28, CS_S_AXIS_TDATA29, CS_S_AXIS_TDATA30, CS_S_AXIS_TDATA31, CS_S_AXIS_TDATA32, CS_S_AXIS_TDATA33, CS_S_AXIS_TDATA34, CS_S_AXIS_TDATA35, CS_S_AXIS_TDATA36, CS_S_AXIS_TDATA37, CS_S_AXIS_TDATA38, CS_S_AXIS_TDATA39, CS_S_AXIS_TDATA40, CS_S_AXIS_TDATA41, CS_S_AXIS_TDATA42, CS_S_AXIS_TDATA43, CS_S_AXIS_TDATA44, CS_S_AXIS_TDATA45, CS_S_AXIS_TDATA46, CS_S_AXIS_TDATA47, CS_S_AXIS_TDATA48, CS_S_AXIS_TDATA49, CS_S_AXIS_TDATA50, CS_S_AXIS_TDATA51, CS_S_AXIS_TDATA52, CS_S_AXIS_TDATA53, CS_S_AXIS_TDATA54, CS_S_AXIS_TDATA55, CS_S_AXIS_TDATA56, CS_S_AXIS_TDATA57, CS_S_AXIS_TDATA58, CS_S_AXIS_TDATA59, CS_S_AXIS_TDATA60, CS_S_AXIS_TDATA61, CS_S_AXIS_TDATA62, CS_S_AXIS_TDATA63);
 
    function integer log2;
       input integer number;
@@ -234,9 +105,12 @@ module ualink_turbo64
 
    parameter NUM_QUEUES_WIDTH = log2(NUM_QUEUES);
 
-   parameter NUM_STATES = 1;
+   parameter NUM_STATES = 4;
    parameter IDLE = 0;
    parameter WR_PKT = 1;
+   parameter READ_OPc1 = 2;
+   parameter READ_OPc2 = 3;
+   parameter READ_OPc3 = 4;
 
    localparam MAX_PKT_SIZE = 2000; // In bytes
    localparam IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_M_AXIS_DATA_WIDTH / 8));
@@ -264,6 +138,13 @@ module ualink_turbo64
 
    reg [NUM_STATES-1:0]                state;
    reg [NUM_STATES-1:0]                state_next;
+   reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg = "abcdefabcdefabcdefabcdefbbeeffff"; //register to hold read response data
+   reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d1_reg =   "00000000000000000000000000000000"; //register to hold read response data
+   reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d2_reg = "00000000000000000000000000000000"; //register to hold read response data
+   reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d3_reg = "00000000000000000000000000000000"; //register to hold read response data
+
+   reg [7:0] ualink_opcode; //opcode from command packet
+
      //debug
   reg [19:0] ledcnt;
   reg [19:0] ledcnt1;
@@ -272,14 +153,34 @@ module ualink_turbo64
   	reg we_a;
 	reg [DPADDR_WIDTH-1:0]               addr_a;
 	reg [DPDATA_WIDTH-1:0]               din_a;
-	reg [DPDATA_WIDTH-1:0]               dout_a;
+	wire [DPDATA_WIDTH-1:0]               dout_a;
 	reg we_b;
 	reg [DPADDR_WIDTH-1:0]               addr_b;
 	reg [DPDATA_WIDTH-1:0]               din_b;
-	reg [DPDATA_WIDTH-1:0]               dout_b;
+	wire [DPDATA_WIDTH-1:0]               dout_b;
 
    // ------------ Modules -------------
 
+   dual_port_ram_8x64
+   #(
+    .DPADDR_WIDTH(DPADDR_WIDTH),
+    .DPDATA_WIDTH(DPDATA_WIDTH),
+    .DPDEPTH (DPDEPTH)
+   )
+   dpmem_inst
+   (
+    .axi_aclk(axi_aclk),
+    .axi_resetn(axi_resetn),
+    .we_a(we_a),
+    .addr_a(addr_a),
+    .din_a(din_a),
+    .dout_a(dout_a),
+    .we_b(we_b),
+    .addr_b(addr_b),
+    .din_b(din_b),
+    .dout_b(dout_b)
+   );
+   
    generate
    genvar i;
    for(i=0; i<NUM_QUEUES; i=i+1) begin: in_arb_queues
@@ -339,7 +240,7 @@ module ualink_turbo64
    assign in_tlast[4]        = s_axis_tlast_4;
    assign s_axis_tready_4    = !nearly_full[4];
 
-   assign cur_queue_plus1    = (cur_queue == NUM_QUEUES-1) ? 0 : cur_queue + 1;
+   assign cur_queue_plus1    = 0; //lock to port 0 (cur_queue == NUM_QUEUES-1) ? 0 : cur_queue + 1;
 
    //assign fifo_out_tuser_sel = fifo_out_tuser[cur_queue];
    //assign fifo_out_tdata_sel = fifo_out_tdata[cur_queue];
@@ -347,24 +248,24 @@ module ualink_turbo64
    //assign fifo_out_tstrb_sel = fifo_out_tstrb[cur_queue];
 
    assign m_axis_tuser = fifo_out_tuser[cur_queue];
-   assign m_axis_tdata = fifo_out_tdata[cur_queue];
+   //assign m_axis_tdata = fifo_out_tdata[cur_queue];
+    assign m_axis_tdata = (state != READ_OPc2) ? fifo_out_tdata[cur_queue] : m_axis_tdata_reg;
    assign m_axis_tlast = fifo_out_tlast[cur_queue];
    assign m_axis_tstrb = fifo_out_tstrb[cur_queue];
    assign m_axis_tvalid = ~empty[cur_queue];
-
-
-
+   
 
    always @(*) begin
       state_next      = state;
       cur_queue_next  = cur_queue;
       rd_en           = 0;
-	//	we_a            = 0;
 
       case(state)
 
         /* cycle between input queues until one is not empty */
-        IDLE: begin
+        IDLE: begin  
+
+
 		     //check if pkt available on currently selected queue
            if(!empty[cur_queue]) begin
 			     // check if pkt is on the AXIS 
@@ -383,26 +284,44 @@ module ualink_turbo64
            /* if this is the last word then write it and get out */
            if(m_axis_tready & m_axis_tlast) begin
               state_next = IDLE;
-	      rd_en[cur_queue] = 1;
+	           rd_en[cur_queue] = 1;
               cur_queue_next = cur_queue_plus1;
            end
            /* otherwise read and write as usual */
-           else if (m_axis_tready & !empty[cur_queue]) begin
-              rd_en[cur_queue] = 1;
-            		  // check for write memory cmd using mask of cmd bits
-                      if ((m_axis_tdata[15:8]) ==  8'hEF) begin
-                      //force any data into DPram
-                      //if(1) begin
-					    we_a <= 1;
-						addr_a <= 8'h0;
-					    din_a <= m_axis_tdata[63:0];
-					  end
-					  else begin
+           else if (m_axis_tready & !empty[0]) begin
+              rd_en[cur_queue] = 1;  //force response to port0
+                 ualink_opcode <= m_axis_tdata[15:8];
+                 $display("UAlink write opcode %h", ualink_opcode);
+               //decode command    
+              if ((m_axis_tdata[15:8]) ==  8'hEF) begin  //write operation  this is a timing hack for now
+                we_a <= 1;
+					 addr_a <= 8'h2;
+					 din_a <= m_axis_tdata[63:0];
+				  end
+              else if ((m_axis_tdata[15:8]) ==  8'hEE) begin  //read to addr 1
+                   addr_a <= 8'h1;
+                   state_next <= READ_OPc1; 
+  					    we_a <= 0;
+                 end
+               else begin
 					    we_a <= 0;
-				     end
-					end
-        
-        end // case: WR_PKT
+					end // ualink opcode processing
+             end  //progress regular packet
+
+
+             end  //WR_PKT state
+
+         READ_OPc1: begin
+              state_next <= READ_OPc2;
+              end
+
+         READ_OPc2: begin
+            state_next <= READ_OPc3;
+            end
+
+         READ_OPc3: begin
+            state_next <= WR_PKT;
+            end   
 
       endcase // case(state)
    end // always @ (*)
@@ -415,6 +334,9 @@ module ualink_turbo64
       else begin
          state <= state_next;
          cur_queue <= cur_queue_next;
+           frame_h0d3_reg <= frame_h0d2_reg;
+            frame_h0d2_reg <= frame_h0d1_reg;
+            frame_h0d1_reg <= s_axis_tdata_0;
       end
    end
 

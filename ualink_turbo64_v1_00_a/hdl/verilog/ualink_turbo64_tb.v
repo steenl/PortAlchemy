@@ -20,7 +20,7 @@
 
 
 // to run in Icarus simulator use:
-// iverilog -o ualink_turbo64_tb.vvp .\ualink_turbo64_tb.v ualink_turbo64.v .\fallthrough_small_fifo_v2.v .\small_fifo_v3.v
+// iverilog -o ualink_turbo64_tb.vvp .\ualink_turbo64_tb.v ualink_turbo64.v .\fallthrough_small_fifo_v2.v .\small_fifo_v3.v .\ualink_dpmem.v
 // vvp ualink_turbo64_tb.vvp
 // gtkwave.exe .\ualink_turbo_tb.vcd
 
@@ -43,13 +43,17 @@ module testbench();
 
     integer i;
 
-    wire [63:0] header_word_0 = 64'hEFBEFECAFECAFECA; // Destination MAC
-    wire [63:0] header_word_1 = 64'h00000008EFBEEFBE; // Source MAC + EtherType
+    wire [63:0] header_word_0  = 64'hEFBEFECAFECAFECA; // Destination MAC with write opcode
+    wire [63:0] header_word_1  = 64'h00000008EFBEEFBE; // Source MAC + EtherType
+    wire [63:0] header_word_0a = 64'hEFBEFECAFECAFFCA; // Destination MAC  read opcode
+    wire [63:0] header_word_1a = 64'h00000008EFBEEEBE; // Source MAC + EtherType
 
     localparam HEADER_0 = 0;
     localparam HEADER_1 = 1;
-    localparam PAYLOAD  = 2;
-    localparam DEAD     = 3;
+    localparam HEADER_0a = 2;
+    localparam HEADER_1a = 3;
+    localparam PAYLOAD  = 4;
+    localparam DEAD     = 5;
 
     reg [2:0] state, state_next;
     reg [7:0] counter, counter_next;
@@ -103,6 +107,34 @@ module testbench();
                 end
             end
 
+//try a read operation now
+
+            HEADER_0a: begin
+                tdata[random] = header_word_0a;
+                tdata[0] = header_word_0a;
+                if(tready[random]) begin
+                    state_next = HEADER_1a;
+                end
+         if (random == 0)
+		 tvalid_0 = 1;
+	       else if (random == 1)
+		 tvalid_1 = 1;
+	       else if (random == 2)
+		 tvalid_2 = 1;
+	       else if (random == 3)
+		 tvalid_0 = 1;  //force to port 0 for easier debugging
+	       else if (random == 4)
+		 tvalid_4 = 1;
+            end
+            HEADER_1a: begin
+                tdata[random] = header_word_1a;
+                tdata[0] = header_word_1a;
+                if(tready[random]) begin
+                    state_next = PAYLOAD;
+                end
+            end
+
+
             DEAD: begin
 
                 counter_next = counter + 1'b1;
@@ -114,8 +146,15 @@ module testbench();
 		tvalid_4 = 0;
                 if(counter[7]==1'b1) begin
                    counter_next = 8'b0;
-		   random = $random % 5;
-                   state_next = HEADER_0;
+		           random = $random % 5;  // lock to 0 for easier debugging
+                   if (random == 3)  begin  //do a read op
+                     state_next = HEADER_0a;
+                     $display("Next random = %d", random);
+                   end
+                   else begin
+                     state_next = HEADER_0;
+                   end
+
                 end
             end
         endcase
@@ -145,7 +184,7 @@ module testbench();
       end
       $display("[%t] : System Reset De-asserted...", $realtime);
       reset = 1'b0;
-      #2000  ;    $finish;       //end simulation
+      #3000  ;    $finish;       //end simulation
   end
 
   always #2.5  clk = ~clk;      // 200MHz
