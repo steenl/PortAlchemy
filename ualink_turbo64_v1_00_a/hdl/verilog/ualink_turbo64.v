@@ -83,9 +83,7 @@ module ualink_turbo64
     input  s_axis_tlast_4,
          // LEDs and debug outputs
     output reg LED03,
-	 output reg CS_we_a,
-	 output reg CS_addr_a0,
-	 output reg CS_din_a0,
+    output reg CS_status0, CS_STATUS1, CS_STATUS2, CS_STATUS3,
 	 output reg CS_m_axis_tvalid,
 	 output reg CS_m_axis_tready,
 	 output reg CS_m_axis_tlast,
@@ -141,7 +139,7 @@ module ualink_turbo64
 
    reg [NUM_STATES-1:0]                state;
    reg [NUM_STATES-1:0]                state_next;
-   reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg = "abcdefabcdefabcdefabcdefbbeeffff"; //register to hold read response data
+   reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg = "abcdefgh"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d1_reg =   "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d2_reg = "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d3_reg = "00000000000000000000000000000000"; //register to hold read response data
@@ -252,8 +250,8 @@ module ualink_turbo64
 
    assign m_axis_tuser = fifo_out_tuser[cur_queue];
    //assign m_axis_tdata = fifo_out_tdata[cur_queue];
-    assign m_axis_tdata = (state != READ_OPc2) ? fifo_out_tdata[cur_queue] : m_axis_tdata_reg;
-   assign m_axis_tlast = fifo_out_tlast[cur_queue];
+   assign m_axis_tdata = (state != READ_OPc2) ? fifo_out_tdata[cur_queue] : m_axis_tdata_reg;  //slam read data into output stream
+   assign m_axis_tlast = (state != READ_OPc3) ? fifo_out_tlast[cur_queue] : 1'b1;  //pulse last on read data cycle 
    assign m_axis_tstrb = fifo_out_tstrb[cur_queue];
    assign m_axis_tvalid = ~empty[cur_queue];
    
@@ -357,7 +355,11 @@ always @(posedge axi_aclk) begin
         end
     end
             // Debug outputs need to be in an clock defined always.
-			CS_m_axis_tvalid <= m_axis_tvalid;
+			CS_status0 <= state[0];
+         CS_STATUS1 <= state[1];
+         CS_STATUS2 <= state[2];
+         CS_STATUS3 <= state[3];
+         CS_m_axis_tvalid <= m_axis_tvalid;
 			CS_m_axis_tready <= m_axis_tready;
 			CS_m_axis_tlast  <= m_axis_tlast;
 			CS_s_axis_tvalid_0 <= s_axis_tvalid_0;
