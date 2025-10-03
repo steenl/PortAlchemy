@@ -356,10 +356,13 @@ always @(posedge axi_aclk) begin
         end
     end
             // Debug outputs need to be in an clock defined always.
-			CS_status0 <= state[0];
-         CS_STATUS1 <= state[1];
-         CS_STATUS2 <= state[2];
-         CS_STATUS3 <= state[3];
+			CS_state0 <= state[0];
+         CS_state1 <= state[1];
+         CS_state2 <= state[2];
+         CS_state3 <= state[3];
+         CS_wr_a <= we_a;
+         CS_addr_a0 <= addr_a[0];
+         CS_din_a0 <= din_a[0];
          CS_m_axis_tvalid <= m_axis_tvalid;
 			CS_m_axis_tready <= m_axis_tready;
 			CS_m_axis_tlast  <= m_axis_tlast;
