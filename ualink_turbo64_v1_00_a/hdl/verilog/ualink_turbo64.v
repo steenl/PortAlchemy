@@ -303,7 +303,7 @@ module ualink_turbo64
 				  end
               else if ((m_axis_tdata[15:8]) ==  8'hEE) begin  //read to addr 1
                    addr_a <= 8'h1;
-                   state_next <= READ_OPc1; 
+                   state_next = READ_OPc1; 
   					    we_a <= 0;
                  end
                else begin
@@ -315,15 +315,15 @@ module ualink_turbo64
              end  //WR_PKT state
 
          READ_OPc1: begin
-              state_next <= READ_OPc2;
+              state_next = READ_OPc2;
               end
 
          READ_OPc2: begin
-            state_next <= READ_OPc3;
+            state_next = READ_OPc3;
             end
 
          READ_OPc3: begin
-            state_next <= WR_PKT;
+            state_next = WR_PKT;
             end   
 
       endcase // case(state)
