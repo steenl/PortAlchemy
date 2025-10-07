@@ -1,3 +1,0 @@
-[submodule "picorv32"]
-	path = picorv32
-	url = https://github.com/YosysHQ/picorv32
