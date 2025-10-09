@@ -22,10 +22,10 @@
 module ualink_turbo64
 #(
     // Master AXI Stream Data Width
-    parameter C_M_AXIS_DATA_WIDTH=256,
-    parameter C_S_AXIS_DATA_WIDTH=256,
-    parameter C_M_AXIS_TUSER_WIDTH=128,
-    parameter C_S_AXIS_TUSER_WIDTH=128,
+    parameter C_M_AXIS_DATA_WIDTH=64,  //256, for visibility
+    parameter C_S_AXIS_DATA_WIDTH=64, // 256,
+    parameter C_M_AXIS_TUSER_WIDTH=32, //128,
+    parameter C_S_AXIS_TUSER_WIDTH=32, //128,
     parameter NUM_QUEUES=5,
     parameter DPADDR_WIDTH = 8,
     parameter DPDATA_WIDTH = 64,
@@ -84,7 +84,7 @@ module ualink_turbo64
          // LEDs and debug outputs
     output reg LED03,
     output reg CS_state0, CS_state1, CS_state2, CS_state3,
-    output reg CS_wr_a, CS_addr_a0, CS_din_a0,
+    output reg CS_we_a, CS_addr_a0, CS_din_a0,
 	 output reg CS_m_axis_tvalid,
 	 output reg CS_m_axis_tready,
 	 output reg CS_m_axis_tlast,
@@ -360,7 +360,7 @@ always @(posedge axi_aclk) begin
          CS_state1 <= state[1];
          CS_state2 <= state[2];
          CS_state3 <= state[3];
-         CS_wr_a <= we_a;
+         CS_we_a <= we_a;
          CS_addr_a0 <= addr_a[0];
          CS_din_a0 <= din_a[0];
          CS_m_axis_tvalid <= m_axis_tvalid;
