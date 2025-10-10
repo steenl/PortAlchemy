@@ -83,6 +83,7 @@ module ualink_turbo64
     input  s_axis_tlast_4,
          // LEDs and debug outputs
     output reg LED03,
+	 output reg CS_empty0,
     output reg CS_state0, CS_state1, CS_state2, CS_state3,
     output reg CS_we_a, CS_addr_a0, CS_din_a0,
 	 output reg CS_m_axis_tvalid,
@@ -145,7 +146,7 @@ module ualink_turbo64
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d2_reg = "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d3_reg = "00000000000000000000000000000000"; //register to hold read response data
 
-   reg [7:0] ualink_opcode; //opcode from command packet
+   reg [15:0] ualink_opcode; //opcode from command packet
 
      //debug
   reg [19:0] ledcnt;
@@ -274,6 +275,7 @@ module ualink_turbo64
               if(m_axis_tready) begin
                  state_next = WR_PKT;
                  rd_en[cur_queue] = 1;
+					 			  
             end
            end
            else begin
@@ -290,17 +292,17 @@ module ualink_turbo64
               cur_queue_next = cur_queue_plus1;
            end
            /* otherwise read and write as usual */
-           else if (m_axis_tready & !empty[0]) begin
+           else if (m_axis_tready & !empty[cur_queue]) begin
               rd_en[cur_queue] = 1;  //force response to port0
-                 ualink_opcode <= m_axis_tdata[15:8];
+                 ualink_opcode <= m_axis_tdata[15:0];
                  $display("UAlink write opcode %h", ualink_opcode);
                //decode command    
-              if ((m_axis_tdata[15:8]) ==  8'hEF) begin  //write operation  this is a timing hack for now
+              if ((m_axis_tdata[15:0]) ==  16'h4501) begin  //write operation
                 we_a <= 1;
-					 addr_a <= 8'h2;
+					 addr_a <= 8'h1;
 					 din_a <= m_axis_tdata[63:0];
 				  end
-              else if ((m_axis_tdata[15:8]) ==  8'hEE) begin  //read to addr 1
+              else if ((m_axis_tdata[15:0]) ==  16'h4502) begin  //read to addr 1
                    addr_a <= 8'h1;
                    state_next = READ_OPc1; 
   					    we_a <= 0;
@@ -339,7 +341,7 @@ module ualink_turbo64
            frame_h0d3_reg <= frame_h0d2_reg;
             frame_h0d2_reg <= frame_h0d1_reg;
             frame_h0d1_reg <= s_axis_tdata_0;
-      end
+		  end
    end
 
       // LED logic (blinky)  Need two sensitivities to force meeting 100MHz timing
@@ -361,6 +363,7 @@ always @(posedge axi_aclk) begin
          CS_state2 <= state[2];
          CS_state3 <= state[3];
          CS_we_a <= we_a;
+			CS_empty0 <= empty[0];
          CS_addr_a0 <= addr_a[0];
          CS_din_a0 <= din_a[0];
          CS_m_axis_tvalid <= m_axis_tvalid;
