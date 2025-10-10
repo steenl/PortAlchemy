@@ -153,7 +153,7 @@ module ualink_turbo64
   reg [19:0] ledcnt1;
   reg     led_reg, led_clk;
   
-  	reg we_a;
+  	reg we_a, we_a_next;
 	reg [DPADDR_WIDTH-1:0]               addr_a;
 	reg [DPDATA_WIDTH-1:0]               din_a;
 	wire [DPDATA_WIDTH-1:0]               dout_a;
@@ -251,32 +251,34 @@ module ualink_turbo64
    //assign fifo_out_tstrb_sel = fifo_out_tstrb[cur_queue];
 
    assign m_axis_tuser = fifo_out_tuser[cur_queue];
-   //assign m_axis_tdata = fifo_out_tdata[cur_queue];
-   assign m_axis_tdata = (state != READ_OPc2) ? fifo_out_tdata[cur_queue] : m_axis_tdata_reg;  //slam read data into output stream
-   assign m_axis_tlast = (state != READ_OPc3) ? fifo_out_tlast[cur_queue] : 1'b1;  //pulse last on read data cycle 
+   
+   assign m_axis_tdata = fifo_out_tdata[cur_queue];
+   //assign m_axis_tdata = (state != READ_OPc2) ? fifo_out_tdata[cur_queue] : m_axis_tdata_reg;  //slam read data into output stream
+   
+   assign m_axis_tlast = fifo_out_tlast[cur_queue];  //pulse last on read data cycle 
+   //assign m_axis_tlast = (state != READ_OPc3) ? fifo_out_tlast[cur_queue] : 1'b1;  //pulse last on read data cycle 
+   
    assign m_axis_tstrb = fifo_out_tstrb[cur_queue];
    assign m_axis_tvalid = ~empty[cur_queue];
    
 
-   always @(*) begin
+   always @(*) begin  // combinational state machine
       state_next      = state;
       cur_queue_next  = cur_queue;
       rd_en           = 0;
+      we_a_next            = 0;
 
       case(state)
 
         /* cycle between input queues until one is not empty */
         IDLE: begin  
-
-
 		     //check if pkt available on currently selected queue
            if(!empty[cur_queue]) begin
 			     // check if pkt is on the AXIS 
               if(m_axis_tready) begin
                  state_next = WR_PKT;
                  rd_en[cur_queue] = 1;
-					 			  
-            end
+             end
            end
            else begin
               cur_queue_next = cur_queue_plus1;
@@ -294,21 +296,21 @@ module ualink_turbo64
            /* otherwise read and write as usual */
            else if (m_axis_tready & !empty[cur_queue]) begin
               rd_en[cur_queue] = 1;  //force response to port0
-                 ualink_opcode <= m_axis_tdata[15:0];
+                 ualink_opcode = m_axis_tdata[15:0];
                  $display("UAlink write opcode %h", ualink_opcode);
                //decode command    
               if ((m_axis_tdata[15:0]) ==  16'h4501) begin  //write operation
-                we_a <= 1;
-					 addr_a <= 8'h1;
-					 din_a <= m_axis_tdata[63:0];
+                we_a_next = 1;
+					 addr_a = 8'h1;
+					 din_a = m_axis_tdata[63:0];
 				  end
               else if ((m_axis_tdata[15:0]) ==  16'h4502) begin  //read to addr 1
-                   addr_a <= 8'h1;
+                   addr_a = 8'h1;
                    state_next = READ_OPc1; 
-  					    we_a <= 0;
+  					    we_a_next = 0;
                  end
                else begin
-					    we_a <= 0;
+					   // we_a = 0;
 					end // ualink opcode processing
              end  //progress regular packet
 
@@ -330,7 +332,7 @@ module ualink_turbo64
       endcase // case(state)
    end // always @ (*)
 //advance state machine regs
-   always @(posedge axi_aclk) begin
+   always @(posedge axi_aclk) begin // state machine
       if(~axi_resetn) begin
          state <= IDLE;
          cur_queue <= 0;
@@ -338,6 +340,7 @@ module ualink_turbo64
       else begin
          state <= state_next;
          cur_queue <= cur_queue_next;
+         we_a <= we_a_next;
            frame_h0d3_reg <= frame_h0d2_reg;
             frame_h0d2_reg <= frame_h0d1_reg;
             frame_h0d1_reg <= s_axis_tdata_0;
