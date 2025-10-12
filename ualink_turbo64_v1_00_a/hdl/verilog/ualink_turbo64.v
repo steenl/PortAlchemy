@@ -324,12 +324,7 @@ module ualink_turbo64
 		else begin
 			    we_a_next = 0;
 	         	end  //read
-               else begin
-			   // we_a = 0;
-		end // ualink opcode processing
-             end  //progress regular packet
-
-
+               end  //progress regular packet
              end  //WR_PKT state
 
          READ_OPc1: begin
