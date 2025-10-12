@@ -266,7 +266,7 @@ module ualink_turbo64
       state_next      = state;
       cur_queue_next  = cur_queue;
       rd_en           = 0;
-      we_a_next            = 0;
+      we_a_next       = we_a;  //modify Oct11 from 1
 
       case(state)
 
@@ -282,8 +282,17 @@ module ualink_turbo64
            end
            else begin
               cur_queue_next = cur_queue_plus1;
-           end
-        end
+	    //debug to drive we_a
+		 if ((s_axis_tdata_0[15:0]) ==  16'h4501) begin  //write operation
+                we_a_next = 1;
+		 addr_a = 8'h1;
+		 din_a = m_axis_tdata[63:0];
+		  end
+		 else begin
+		   we_a_next = 0;
+		   end //else
+	      end //else
+   	end //end idle state 0x00
 
         /* wait until eop */
         WR_PKT: begin
@@ -294,24 +303,30 @@ module ualink_turbo64
               cur_queue_next = cur_queue_plus1;
            end
            /* otherwise read and write as usual */
-           else if (m_axis_tready & !empty[cur_queue]) begin
+	   else if (m_axis_tready ) begin //  & !empty[cur_queue]) begin // relaxing term to enable we_a
               rd_en[cur_queue] = 1;  //force response to port0
                  ualink_opcode = m_axis_tdata[15:0];
                  $display("UAlink write opcode %h", ualink_opcode);
-               //decode command    
-              if ((m_axis_tdata[15:0]) ==  16'h4501) begin  //write operation
+					//decode command    
+              if ((frame_h0d3_reg[63:48]) ==  16'h0245) begin  //write operation
                 we_a_next = 1;
-					 addr_a = 8'h1;
-					 din_a = m_axis_tdata[63:0];
-				  end
-              else if ((m_axis_tdata[15:0]) ==  16'h4502) begin  //read to addr 1
+		 addr_a = 8'h1;
+		 din_a = m_axis_tdata[63:0];
+		  end
+		  else begin
+			  we_a_next = 0;
+		  end  //write
+		  if ((frame_h0d2_reg[63:48]) ==  16'h0145) begin  //read to addr 1
                    addr_a = 8'h1;
                    state_next = READ_OPc1; 
-  					    we_a_next = 0;
-                 end
+  		    we_a_next = 1;
+	    	end //if
+		else begin
+			    we_a_next = 0;
+	         	end  //read
                else begin
-					   // we_a = 0;
-					end // ualink opcode processing
+			   // we_a = 0;
+		end // ualink opcode processing
              end  //progress regular packet
 
 
