@@ -283,7 +283,7 @@ module ualink_turbo64
            else begin
               cur_queue_next = cur_queue_plus1;
 	    //debug to drive we_a
-		 if ((s_axis_tdata_0[15:0]) ==  16'h4501) begin  //write operation
+		 if ((s_axis_tdata_0[63:48]) ==  16'h0245) begin  //write operation
                 we_a_next = 1;
 		 addr_a = 8'h1;
 		 din_a = m_axis_tdata[63:0];
@@ -313,15 +313,12 @@ module ualink_turbo64
 		 addr_a = 8'h1;
 		 din_a = m_axis_tdata[63:0];
 		  end
-		  else begin
-			  we_a_next = 0;
-		  end  //write
-		  if ((frame_h0d2_reg[63:48]) ==  16'h0145) begin  //read to addr 1
+		  else if ((frame_h0d2_reg[63:48]) ==  16'h0145) begin  //read to addr 1
                    addr_a = 8'h1;
                    state_next = READ_OPc1; 
-  		    we_a_next = 1;
+  		    we_a_next = 0;
 	    	end //if
-		else begin
+		else begin  //fail read/write quals
 			    we_a_next = 0;
 	         	end  //read
                end  //progress regular packet
