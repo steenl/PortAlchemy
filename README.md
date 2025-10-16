@@ -10,5 +10,7 @@ If you want to simulate basic transactions, install icarus and follow instructio
 
 to run in Icarus simulator use:
 > iverilog -o ualink_turbo64_tb.vvp .\ualink_turbo64_tb.v ualink_turbo64.v .\fallthrough_small_fifo_v2.v .\small_fifo_v3.v .\ualink_dpmem.v
+> 
 > vvp ualink_turbo64_tb.vvp
+> 
 > gtkwave.exe .\ualink_turbo_tb.vcd
