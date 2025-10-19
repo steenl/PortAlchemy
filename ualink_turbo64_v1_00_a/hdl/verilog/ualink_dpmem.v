@@ -67,11 +67,11 @@ end
 // Write-first behavior: when a write occurs on port A, dout_a returns the written data immediately.
   always @(posedge axi_aclk) begin
     if (!axi_resetn) begin  //initialize memory at reset
-        dout_a <= 0;
+        dout_a <= "CAFEcafe";
         we_a_reg   <= 0;
         addr_a_reg <= 0;
         din_a_reg  <= 0;
-        dout_b <= 0;
+        // dout_b <= 0;
         we_b_reg   <= 0;
         addr_b_reg <= 0;
         din_b_reg  <= 0;
@@ -81,7 +81,7 @@ end
       end else begin
       if (we_a) begin
          dpmem[addr_a] <= din_a;
-         dout_a <= din_a;  // write-first: read returns new data
+         dout_a <= "BEEFbeef"; //din_a;  // write-first: read returns new data
          end else begin
          dout_a <= dpmem[addr_a];    // synchronous read
          end
@@ -89,7 +89,7 @@ end
     end
 	 // Port B logic (synchronous)
   // Write-first behavior on port B as well.
-  always @(posedge axi_aclk) begin
+/*  always @(posedge axi_aclk) begin
     if (axi_resetn) begin
       if (we_b) begin
         dpmem[addr_b] <= din_b;
@@ -98,7 +98,7 @@ end
         dout_b <= dpmem[addr_b];
         end
 		end
-  end
+  end*/
 // Notes:
 // - If both ports write the same address in the same cycle (in the same or different clocks), the final value is implementation-dependent / undefined.
 // - To infer true dual-port block RAM on your FPGA, check vendor guidance (attributes or IP generator). The commented ram_style attribute is supported by some toolchains.

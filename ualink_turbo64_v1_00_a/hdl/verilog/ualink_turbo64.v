@@ -252,9 +252,10 @@ module ualink_turbo64
 
    assign m_axis_tuser = fifo_out_tuser[cur_queue];
    
-   assign m_axis_tdata = fifo_out_tdata[cur_queue];
-   //assign m_axis_tdata = (state != READ_OPc2) ? fifo_out_tdata[cur_queue] : m_axis_tdata_reg;  //slam read data into output stream
-   
+   //assign m_axis_tdata = fifo_out_tdata[cur_queue];
+   //assign m_axis_tdata = (state != (READ_OPc2 || READ_OPc3)) ? fifo_out_tdata[cur_queue] : m_axis_tdata_reg;  //slam read data into output stream
+   assign m_axis_tdata = (state == (IDLE || WR_PKT)) ?  fifo_out_tdata[cur_queue] : m_axis_tdata_reg;
+	
    assign m_axis_tlast = fifo_out_tlast[cur_queue];  //pulse last on read data cycle 
    //assign m_axis_tlast = (state != READ_OPc3) ? fifo_out_tlast[cur_queue] : 1'b1;  //pulse last on read data cycle 
    
@@ -266,7 +267,7 @@ module ualink_turbo64
       state_next      = state;
       cur_queue_next  = cur_queue;
       rd_en           = 0;
-      we_a_next       = we_a;  //modify Oct11 from 1
+      we_a_next       = we_a;  
 
       case(state)
 
@@ -282,15 +283,6 @@ module ualink_turbo64
            end
            else begin
               cur_queue_next = cur_queue_plus1;
-	    //debug to drive we_a
-		 if ((s_axis_tdata_0[63:48]) ==  16'h0245) begin  //write operation
-                we_a_next = 1;
-		 addr_a = 8'h1;
-		 din_a = m_axis_tdata[63:0];
-		  end
-		 else begin
-		   we_a_next = 0;
-		   end //else
 	      end //else
    	end //end idle state 0x00
 
@@ -313,9 +305,9 @@ module ualink_turbo64
 		 addr_a = 8'h1;
 		 din_a = m_axis_tdata[63:0];
 		  end
-		  else if ((frame_h0d2_reg[63:48]) ==  16'h0145) begin  //read to addr 1
-                   addr_a = 8'h1;
-                   state_next = READ_OPc1; 
+		  else if ((frame_h0d3_reg[63:48]) ==  16'h0145) begin  //read to addr 1
+           addr_a = 8'h1;
+           state_next = READ_OPc1; 
   		    we_a_next = 0;
 	    	end //if
 		else begin  //fail read/write quals
@@ -324,17 +316,23 @@ module ualink_turbo64
                end  //progress regular packet
              end  //WR_PKT state
 
-         READ_OPc1: begin
+         READ_OPc1: begin  //first 8B
               state_next = READ_OPc2;
-              end
+				  addr_a = addr_a+1;
+				  m_axis_tdata_reg = dout_a;
+         end
 
          READ_OPc2: begin
             state_next = READ_OPc3;
-            end
+				addr_a = addr_a+1;
+				m_axis_tdata_reg = dout_a;
+         end
 
          READ_OPc3: begin
             state_next = WR_PKT;
-            end   
+         	addr_a = addr_a+1;
+				m_axis_tdata_reg = dout_a;
+			end   
 
       endcase // case(state)
    end // always @ (*)
@@ -348,9 +346,9 @@ module ualink_turbo64
          state <= state_next;
          cur_queue <= cur_queue_next;
          we_a <= we_a_next;
-           frame_h0d3_reg <= frame_h0d2_reg;
-            frame_h0d2_reg <= frame_h0d1_reg;
-            frame_h0d1_reg <= s_axis_tdata_0;
+         frame_h0d3_reg <= frame_h0d2_reg;
+         frame_h0d2_reg <= frame_h0d1_reg;
+         frame_h0d1_reg <= s_axis_tdata_0;
 		  end
    end
 
