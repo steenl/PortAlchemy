@@ -169,7 +169,7 @@ module ualink_turbo64
   reg     led_reg, led_clk;
   
   	reg we_a, we_a_next;
-	reg [DPADDR_WIDTH-1:0]               addr_a_next, addr_a;
+	reg [DPADDR_WIDTH-1:0]               addr_a_next = 64'h00, addr_a = 64'h00;
 	reg [DPDATA_WIDTH-1:0]               din_a;
 	wire [DPDATA_WIDTH-1:0]               dout_a;
 	reg we_b;
@@ -427,18 +427,28 @@ module ualink_turbo64
       if(~axi_resetn) begin
          state <= IDLE;
          cur_queue <= 0;
+         din_a <= 0;
+         we_a <= 0;
       end
       else begin
          state <= state_next;
          cur_queue <= cur_queue_next;
          we_a <= we_a_next;
-         addr_a_next <= addr_a;
+         addr_a <= addr_a_next;
          frame_h0d4_reg <= frame_h0d3_reg;
          frame_h0d3_reg <= frame_h0d2_reg;
          frame_h0d2_reg <= frame_h0d1_reg;
-         frame_h0d1_reg <= s_axis_tdata_0;
 		  end
    end
+
+      always @(negedge axi_aclk) begin // make sure we start walking s_axis_tdata_0 early enough
+      if(~axi_resetn) begin
+         frame_h0d1_reg <= 0;
+      end
+      else begin
+         frame_h0d1_reg <= s_axis_tdata_0;
+      end
+      end // always
 
       // LED logic (blinky)  Need two sensitivities to force meeting 100MHz timing
 always @(posedge axi_aclk) begin

@@ -1,3 +1,5 @@
+//Partially AI generated, tests DPMEM read/write operations via AXI Stream interface
+
 // iverilog -o ualink_turbordwr_tb.vvp  ualink_turbordwr_tb.v  ualink_turbo64.v .\fallthrough_small_fifo_v2.v .\small_fifo_v3.v .\ualink_dpmem.v  
 // vvp .\ualink_turbordwr_tb.vvp  
 // gtkwave.exe .\ualink_turbo64.vcd
