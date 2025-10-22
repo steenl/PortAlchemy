@@ -114,6 +114,20 @@ module ualink_turbo64
    parameter READ_OPc1 = 2;
    parameter READ_OPc2 = 3;
    parameter READ_OPc3 = 4;
+   parameter READ_OPc4 = 5;
+   parameter READ_OPc5 = 6;
+   parameter READ_OPc6 = 7;   
+   parameter READ_OPc7 = 8;
+   parameter READ_OPc8 = 9;
+   parameter WRITE_OPc0 = 10;
+   parameter WRITE_OPc1 = 11;
+   parameter WRITE_OPc2 = 12;
+   parameter WRITE_OPc3 = 13;
+   parameter WRITE_OPc4 = 14;
+   parameter WRITE_OPc5 = 15;
+   parameter WRITE_OPc6 = 16;
+   parameter WRITE_OPc7 = 17;
+   parameter WRITE_OPc8 = 18;
 
    localparam MAX_PKT_SIZE = 2000; // In bytes
    localparam IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_M_AXIS_DATA_WIDTH / 8));
@@ -145,6 +159,7 @@ module ualink_turbo64
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d1_reg =   "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d2_reg = "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d3_reg = "00000000000000000000000000000000"; //register to hold read response data
+   reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d4_reg = "00000000000000000000000000000000"; //register to hold read response data
 
    reg [15:0] ualink_opcode; //opcode from command packet
 
@@ -154,7 +169,7 @@ module ualink_turbo64
   reg     led_reg, led_clk;
   
   	reg we_a, we_a_next;
-	reg [DPADDR_WIDTH-1:0]               addr_a;
+	reg [DPADDR_WIDTH-1:0]               addr_a_next, addr_a;
 	reg [DPDATA_WIDTH-1:0]               din_a;
 	wire [DPDATA_WIDTH-1:0]               dout_a;
 	reg we_b;
@@ -301,10 +316,10 @@ module ualink_turbo64
                  $display("UAlink write opcode %h", ualink_opcode);
 					//decode command    
               if ((frame_h0d3_reg[63:48]) ==  16'h0245) begin  //write operation
-                we_a_next = 1;
-		 addr_a = 8'h1;
-		 din_a = m_axis_tdata[63:0];
-		  end
+               we_a_next = 1;
+		         addr_a = 8'h55; //dummy addr
+		         state_next = WRITE_OPc0;
+		      end
 		  else if ((frame_h0d3_reg[63:48]) ==  16'h0145) begin  //read to addr 1
            addr_a = 8'h1;
            state_next = READ_OPc1; 
@@ -316,23 +331,94 @@ module ualink_turbo64
                end  //progress regular packet
              end  //WR_PKT state
 
+         
+         WRITE_OPc0: begin  //addr 
+              state_next = WRITE_OPc1;
+				  addr_a_next = frame_h0d3_reg[63:56];
+			end
+         WRITE_OPc1: begin  // D1
+              state_next = WRITE_OPc2;
+				  addr_a_next = addr_a + 1;
+				  din_a = s_axis_tdata_0;
+         end
+         WRITE_OPc2: begin  
+              state_next = WRITE_OPc3;
+				  addr_a_next = addr_a + 1;
+              din_a = s_axis_tdata_0;
+         end
+         WRITE_OPc3: begin  
+              state_next = WRITE_OPc4;
+				  addr_a_next = addr_a + 1;
+				  din_a = s_axis_tdata_0;
+         end
+         WRITE_OPc4: begin  
+              state_next = WRITE_OPc5;
+				  addr_a_next = addr_a + 1;
+				  din_a = s_axis_tdata_0;
+         end
+         WRITE_OPc5: begin 
+              state_next = WRITE_OPc6;
+				  addr_a_next = addr_a + 1;
+				  din_a = s_axis_tdata_0;
+         end
+         WRITE_OPc6: begin  
+              state_next = WRITE_OPc7;
+				  addr_a_next = addr_a + 1;
+				  din_a = s_axis_tdata_0;
+         end
+         WRITE_OPc7: begin  
+              state_next = WRITE_OPc8;
+				  addr_a_next = addr_a + 1;
+				  din_a = s_axis_tdata_0;
+         end
+         WRITE_OPc8: begin 
+              state_next = WR_PKT;
+				  addr_a_next = addr_a + 1;
+				  din_a = s_axis_tdata_0;
+         end
+
+
          READ_OPc1: begin  //first 8B
               state_next = READ_OPc2;
-				  addr_a = addr_a+1;
+				  addr_a_next = addr_a + 1;
 				  m_axis_tdata_reg = dout_a;
          end
-
-         READ_OPc2: begin
-            state_next = READ_OPc3;
-				addr_a = addr_a+1;
-				m_axis_tdata_reg = dout_a;
+         READ_OPc2: begin  // 8B
+              state_next = READ_OPc3;
+				  addr_a_next = addr_a + 1;
+				  m_axis_tdata_reg = dout_a;
          end
-
-         READ_OPc3: begin
-            state_next = WR_PKT;
-         	addr_a = addr_a+1;
-				m_axis_tdata_reg = dout_a;
-			end   
+         READ_OPc3: begin  // 8B
+              state_next = READ_OPc4;
+				  addr_a_next = addr_a + 1;
+				  m_axis_tdata_reg = dout_a;
+         end
+         READ_OPc4: begin  // 8B
+              state_next = READ_OPc5;
+				  addr_a_next = addr_a + 1;
+				  m_axis_tdata_reg = dout_a;
+         end
+         READ_OPc5: begin  // 8B
+              state_next = READ_OPc6;
+				  addr_a_next = addr_a + 1;
+				  m_axis_tdata_reg = dout_a;
+         end
+         READ_OPc6: begin  //first 8B
+              state_next = READ_OPc7;
+				  addr_a_next = addr_a + 1;
+				  m_axis_tdata_reg = dout_a;
+         end
+         READ_OPc7: begin  //first 8B
+              state_next = READ_OPc8;
+				  addr_a_next = addr_a + 1;
+				  m_axis_tdata_reg = dout_a;
+         end
+         READ_OPc8: begin  //first 8B
+              state_next = WR_PKT;
+				  addr_a_next = addr_a + 1;
+				  m_axis_tdata_reg = dout_a;
+         end
+         
 
       endcase // case(state)
    end // always @ (*)
@@ -346,6 +432,8 @@ module ualink_turbo64
          state <= state_next;
          cur_queue <= cur_queue_next;
          we_a <= we_a_next;
+         addr_a_next <= addr_a;
+         frame_h0d4_reg <= frame_h0d3_reg;
          frame_h0d3_reg <= frame_h0d2_reg;
          frame_h0d2_reg <= frame_h0d1_reg;
          frame_h0d1_reg <= s_axis_tdata_0;
