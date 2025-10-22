@@ -1,3 +1,5 @@
+// mac_unit.sv Dean 2025 - Single-Cycle MAC Unit
+
 module mac_unit #(
     parameter DATA_WIDTH = 16,
     parameter ARRAY_SIZE = 8
