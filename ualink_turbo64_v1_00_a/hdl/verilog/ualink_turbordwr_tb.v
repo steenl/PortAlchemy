@@ -414,6 +414,34 @@ module tb_ualink_turbo64;
             @(posedge axi_aclk);
             s_axis_tdata_0 = write_data;
             s_axis_tlast_0 = 1;
+            // Word 4: Data to write
+            @(posedge axi_aclk);
+            s_axis_tdata_0 = write_data+1;
+            s_axis_tlast_0 = 1;
+            // Word 4: Data to write
+            @(posedge axi_aclk);
+            s_axis_tdata_0 = write_data+2;
+            s_axis_tlast_0 = 1;
+            // Word 4: Data to write
+            @(posedge axi_aclk);
+            s_axis_tdata_0 = write_data+3;
+            s_axis_tlast_0 = 1;
+            // Word 4: Data to write
+            @(posedge axi_aclk);
+            s_axis_tdata_0 = write_data+4;
+            s_axis_tlast_0 = 1;
+            // Word 4: Data to write
+            @(posedge axi_aclk);
+            s_axis_tdata_0 = write_data+5;
+            s_axis_tlast_0 = 1;
+            // Word 4: Data to write
+            @(posedge axi_aclk);
+            s_axis_tdata_0 = write_data+6;
+            s_axis_tlast_0 = 1;
+            // Word 4: Data to write
+            @(posedge axi_aclk);
+            s_axis_tdata_0 = write_data+7;
+            s_axis_tlast_0 = 1;
             
             // Deassert after last word
             @(posedge axi_aclk);

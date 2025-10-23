@@ -108,7 +108,7 @@ module ualink_turbo64
 
    parameter NUM_QUEUES_WIDTH = log2(NUM_QUEUES);
 
-   parameter NUM_STATES = 4;
+   parameter NUM_STATES = 19;
    parameter IDLE = 0;
    parameter WR_PKT = 1;
    parameter READ_OPc1 = 2;
@@ -321,7 +321,7 @@ module ualink_turbo64
 		         state_next = WRITE_OPc0;
 		      end
 		  else if ((frame_h0d3_reg[63:48]) ==  16'h0145) begin  //read to addr 1
-           addr_a = 8'h1;
+           addr_a_next = 8'h0;  //replace with parsed addr
            state_next = READ_OPc1; 
   		    we_a_next = 0;
 	    	end //if
@@ -334,47 +334,47 @@ module ualink_turbo64
          
          WRITE_OPc0: begin  //addr 
               state_next = WRITE_OPc1;
-				  addr_a_next = frame_h0d3_reg[63:56];
+				  addr_a_next = 8'h00;  //frame_h0d3_reg[63:56];
 			end
          WRITE_OPc1: begin  // D1
               state_next = WRITE_OPc2;
 				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
+				  din_a = frame_h0d4_reg;
          end
          WRITE_OPc2: begin  
               state_next = WRITE_OPc3;
 				  addr_a_next = addr_a + 1;
-              din_a = s_axis_tdata_0;
+              din_a = frame_h0d4_reg;
          end
          WRITE_OPc3: begin  
               state_next = WRITE_OPc4;
 				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
+				  din_a = frame_h0d4_reg;
          end
          WRITE_OPc4: begin  
               state_next = WRITE_OPc5;
 				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
+				  din_a = frame_h0d4_reg;
          end
          WRITE_OPc5: begin 
               state_next = WRITE_OPc6;
 				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
+				  din_a = frame_h0d4_reg;
          end
          WRITE_OPc6: begin  
               state_next = WRITE_OPc7;
 				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
+				  din_a = frame_h0d4_reg;
          end
          WRITE_OPc7: begin  
               state_next = WRITE_OPc8;
 				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
+				  din_a = frame_h0d4_reg;
          end
          WRITE_OPc8: begin 
               state_next = WR_PKT;
 				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
+				  din_a = frame_h0d4_reg;
          end
 
 
@@ -427,7 +427,7 @@ module ualink_turbo64
       if(~axi_resetn) begin
          state <= IDLE;
          cur_queue <= 0;
-         din_a <= 0;
+        // din_a <= 0;
          we_a <= 0;
       end
       else begin
