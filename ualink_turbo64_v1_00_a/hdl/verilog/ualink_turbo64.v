@@ -108,7 +108,7 @@ module ualink_turbo64
 
    parameter NUM_QUEUES_WIDTH = log2(NUM_QUEUES);
 
-   parameter NUM_STATES = 19;
+   parameter NUM_STATES = 20;
    parameter IDLE = 0;
    parameter WR_PKT = 1;
    parameter READ_OPc1 = 2;
@@ -128,6 +128,7 @@ module ualink_turbo64
    parameter WRITE_OPc6 = 16;
    parameter WRITE_OPc7 = 17;
    parameter WRITE_OPc8 = 18;
+   parameter WRITE_OPc9 = 19;
 
    localparam MAX_PKT_SIZE = 2000; // In bytes
    localparam IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_M_AXIS_DATA_WIDTH / 8));
@@ -277,6 +278,12 @@ module ualink_turbo64
    assign m_axis_tstrb = fifo_out_tstrb[cur_queue];
    assign m_axis_tvalid = ~empty[cur_queue];
    
+//Incoming UALink command parser state machine
+// H0 = 64bit Header word 0 = src MAC
+// H1 = op code field
+// H2 = misc ethernet fields
+// H3 = addr field
+// D0-7 = data words for 64B write/read ops
 
    always @(*) begin  // combinational state machine
       state_next      = state;
@@ -316,12 +323,12 @@ module ualink_turbo64
                  $display("UAlink write opcode %h", ualink_opcode);
 					//decode command    
               if ((frame_h0d3_reg[63:48]) ==  16'h0245) begin  //write operation
-               we_a_next = 1;
+               we_a_next = 0;
 		         addr_a = 8'h55; //dummy addr
 		         state_next = WRITE_OPc0;
 		      end
 		  else if ((frame_h0d3_reg[63:48]) ==  16'h0145) begin  //read to addr 1
-           addr_a_next = 8'h0;  //replace with parsed addr
+           addr_a_next = frame_h0d2_reg[63:56]; // 8'h0;  //replace with parsed addr
            state_next = READ_OPc1; 
   		    we_a_next = 0;
 	    	end //if
@@ -332,16 +339,17 @@ module ualink_turbo64
              end  //WR_PKT state
 
          
-         WRITE_OPc0: begin  //addr 
+         WRITE_OPc0: begin  //grab address from Header 5
               state_next = WRITE_OPc1;
-				  addr_a_next = 8'h00;  //frame_h0d3_reg[63:56];
+				  addr_a_next = frame_h0d3_reg[63:56];  //8'b00; //dummy addr
 			end
          WRITE_OPc1: begin  // D1
               state_next = WRITE_OPc2;
 				  addr_a_next = addr_a + 1;
 				  din_a = frame_h0d4_reg;
+              we_a_next = 1;
          end
-         WRITE_OPc2: begin  
+         WRITE_OPc2: begin   //D0
               state_next = WRITE_OPc3;
 				  addr_a_next = addr_a + 1;
               din_a = frame_h0d4_reg;
@@ -371,10 +379,16 @@ module ualink_turbo64
 				  addr_a_next = addr_a + 1;
 				  din_a = frame_h0d4_reg;
          end
-         WRITE_OPc8: begin 
+         WRITE_OPc8: begin  
+              state_next = WRITE_OPc9;
+				  addr_a_next = addr_a + 1;
+				  din_a = frame_h0d4_reg;
+         end
+         WRITE_OPc9: begin 
               state_next = WR_PKT;
 				  addr_a_next = addr_a + 1;
 				  din_a = frame_h0d4_reg;
+              we_a_next = 0;
          end
 
 

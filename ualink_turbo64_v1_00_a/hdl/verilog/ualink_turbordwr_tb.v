@@ -405,11 +405,16 @@ module tb_ualink_turbo64;
             // Word 2: Header
             @(posedge axi_aclk);
             s_axis_tdata_0 = 64'h0000000000000002;
-            
+
+           
             // Word 3: Header with write opcode (0x0245 in upper 16 bits)
             @(posedge axi_aclk);
             s_axis_tdata_0 = 64'h0245000000000003;
-            
+            // Word 4: address field
+            @(posedge axi_aclk);
+            s_axis_tdata_0 = 64'h3000000000000000;  //remember big endian and will be supplied by scapy pkt.
+
+
             // Word 4: Data to write
             @(posedge axi_aclk);
             s_axis_tdata_0 = write_data;
@@ -474,10 +479,19 @@ module tb_ualink_turbo64;
             @(posedge axi_aclk);
             s_axis_tdata_0 = 64'h0145000000000003;
             
-            // Word 4: Dummy data for read command
+            // Word 4: Dummy data for read command and repeat for 8 words to allow turbo64 read response
             @(posedge axi_aclk);
-            s_axis_tdata_0 = 64'h0000000000000000;
+            s_axis_tdata_0 = 64'h3000000000000000; //for the address to be read
             s_axis_tlast_0 = 1;
+            @(posedge axi_aclk);
+            @(posedge axi_aclk);
+            @(posedge axi_aclk);
+            @(posedge axi_aclk);
+            @(posedge axi_aclk);
+            @(posedge axi_aclk);
+            @(posedge axi_aclk);
+            @(posedge axi_aclk);
+            
             
             // Deassert after last word
             @(posedge axi_aclk);
