@@ -324,7 +324,6 @@ module ualink_turbo64
 					//decode command    
               if ((frame_h0d3_reg[63:48]) ==  16'h0245) begin  //write operation
                we_a_next = 0;
-		         addr_a = 8'h55; //dummy addr
 		         state_next = WRITE_OPc0;
 		      end
 		  else if ((frame_h0d3_reg[63:48]) ==  16'h0145) begin  //read to addr 1
