@@ -1,0 +1,127 @@
+################################################################################
+# GitHub Actions Workflow: Verilog Regression Tests
+################################################################################
+#
+# PURPOSE:
+#   Automated testing of all Verilog testbenches on pull requests and pushes
+#   to main branch. Ensures code quality and prevents regressions.
+#
+# TRIGGERS:
+#   - Pull requests targeting 'main' branch
+#   - Direct pushes to 'main' branch (e.g., after merge)
+#
+# STRATEGY:
+#   - Parallel execution: 3 testbenches run simultaneously
+#   - Independent jobs: One failure doesn't stop others
+#   - Artifact collection: Waveforms saved on failures for debugging
+#
+# DURATION:
+#   - Expected: 2-3 minutes (parallel execution)
+#   - Maximum: 10 minutes per job (timeout)
+#
+################################################################################
+
+name: Verilog Regression Tests
+
+# When to run this workflow
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+# Define the jobs
+jobs:
+  test-verilog:
+    # Job name shown in GitHub UI (includes testbench name)
+    name: Test ${{ matrix.testbench }}
+
+    # Use latest Ubuntu (currently 22.04 LTS)
+    runs-on: ubuntu-latest
+
+    # Timeout after 60 minutes (safety net, should never be reached)
+    timeout-minutes: 60
+
+    # Matrix strategy: Create 3 parallel jobs
+    strategy:
+      # Don't cancel other tests if one fails
+      fail-fast: false
+
+      # Define the matrix dimension
+      matrix:
+        testbench:
+          - ualink_turbo64_tb
+          - ualink_turbordwr_tb
+          - ualink_dpmem_tb
+
+    # Steps to execute for each matrix job
+    steps:
+      ############################################################################
+      # Step 1: Get the code
+      ############################################################################
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        # This clones your repository into the runner's workspace
+        # Default: Full clone, no submodules, main branch (or PR branch)
+
+      ############################################################################
+      # Step 2: Install Icarus Verilog simulator
+      ############################################################################
+      - name: Install Icarus Verilog
+        run: |
+          echo "Installing Icarus Verilog..."
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          echo "Verifying installation..."
+          iverilog -V 2>&1 | head -n 1 || true
+          which iverilog
+          which vvp
+        # This installs iverilog v11.0 from Ubuntu repositories
+        # Takes ~10-15 seconds
+        # Includes both compiler (iverilog) and simulator (vvp)
+
+      ############################################################################
+      # Step 3: Setup Python for result parsing
+      ############################################################################
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+        # Installs latest Python 3 (currently 3.11)
+        # Usually already available on ubuntu-latest, this ensures it's present
+
+      ############################################################################
+      # Step 4: Make scripts executable
+      ############################################################################
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh scripts/*.py
+        # Ensures our scripts can be executed
+        # Needed because git doesn't always preserve execute permissions
+
+      ############################################################################
+      # Step 5: Run the testbench
+      ############################################################################
+      - name: Run ${{ matrix.testbench }}
+        run: |
+          echo "=========================================="
+          echo "Running testbench: ${{ matrix.testbench }}"
+          echo "=========================================="
+          ./scripts/run_test.sh ${{ matrix.testbench }}
+        # This is the main test execution
+        # Script handles: compile → simulate → parse results
+        # Exit code 0 = pass, exit code 1 = fail
+
+      ############################################################################
+      # Step 6: Upload waveforms if test failed
+      ############################################################################
+      - name: Upload waveforms on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.testbench }}-waveforms
+          path: '**/*.vcd'
+          retention-days: 7
+        # Only runs if previous step failed (if: failure())
+        # Uploads all .vcd files for debugging
+        # Artifacts available for 7 days
+        # Download from GitHub Actions UI → "Artifacts" section
