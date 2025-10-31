@@ -184,6 +184,9 @@ module testbench();
       end
       $display("[%t] : System Reset De-asserted...", $realtime);
       reset = 1'b0;
+      $display("\n========================================");
+      $display("All Tests Completed!");
+      $display("========================================");
       #3000  ;    $finish;       //end simulation
   end
 
