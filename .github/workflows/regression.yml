@@ -73,7 +73,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y iverilog
           echo "Verifying installation..."
-          iverilog -v
+          iverilog -V 2>&1 | head -n 1 || true
           which iverilog
           which vvp
         # This installs iverilog v11.0 from Ubuntu repositories
