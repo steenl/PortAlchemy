@@ -85,7 +85,7 @@ module ualink_turbo64
     output reg LED03,
 	 output reg CS_empty0,
     output reg CS_state0, CS_state1, CS_state2, CS_state3,
-    output reg CS_we_a, CS_addr_a0, CS_din_a0,
+    output reg CS_we_a, CS_addr_a0, CS_addr_a1, CS_addr_a2, CS_addr_a3, CS_addr_a4, CS_addr_a5, CS_addr_a6, CS_addr_a7,CS_din_a0,
 	 output reg CS_m_axis_tvalid,
 	 output reg CS_m_axis_tready,
 	 output reg CS_m_axis_tlast,
@@ -108,7 +108,7 @@ module ualink_turbo64
 
    parameter NUM_QUEUES_WIDTH = log2(NUM_QUEUES);
 
-   parameter NUM_STATES = 20;
+   parameter NUM_STATES = 21;
    parameter IDLE = 0;
    parameter WR_PKT = 1;
    parameter READ_OPc1 = 2;
@@ -119,6 +119,7 @@ module ualink_turbo64
    parameter READ_OPc6 = 7;   
    parameter READ_OPc7 = 8;
    parameter READ_OPc8 = 9;
+   parameter READ_OPc9 = 20;
    parameter WRITE_OPc0 = 10;
    parameter WRITE_OPc1 = 11;
    parameter WRITE_OPc2 = 12;
@@ -322,13 +323,12 @@ module ualink_turbo64
                  ualink_opcode = m_axis_tdata[15:0];
                  $display("UAlink write opcode %h", ualink_opcode);
 					//decode command    
-              if ((frame_h0d3_reg[63:48]) ==  16'h0245) begin  //write operation
+              if ((frame_h0d4_reg[63:48]) ==  16'h0245) begin  //write operation
                we_a_next = 0;
 		         state_next = WRITE_OPc0;
 		      end
-		  else if ((frame_h0d3_reg[63:48]) ==  16'h0145) begin  //read to addr 1
-           addr_a_next = frame_h0d2_reg[63:56]; // 8'h0;  //replace with parsed addr
-           state_next = READ_OPc1; 
+		  else if ((frame_h0d4_reg[63:48]) ==  16'h0145) begin  //read to addr 1
+           state_next = READ_OPc1; // states 2,3,4,5,6,7,8,9
   		    we_a_next = 0;
 	    	end //if
 		else begin  //fail read/write quals
@@ -340,7 +340,7 @@ module ualink_turbo64
          
          WRITE_OPc0: begin  //grab address from Header 5
               state_next = WRITE_OPc1;
-				  addr_a_next = frame_h0d3_reg[63:56];  //8'b00; //dummy addr
+				  addr_a_next = s_axis_tdata_0[63:56]; //frame_h0d3_reg[63:56];  //8'b00; //dummy addr
 			end
          WRITE_OPc1: begin  // D1
               state_next = WRITE_OPc2;
@@ -394,6 +394,7 @@ module ualink_turbo64
          READ_OPc1: begin  //first 8B
               state_next = READ_OPc2;
 				  addr_a_next = addr_a + 1;
+           addr_a_next = s_axis_tdata_0[63:56];   //frame_h0d2_reg[63:56]; // 8'h0;  //replace with parsed addr
 				  m_axis_tdata_reg = dout_a;
          end
          READ_OPc2: begin  // 8B
@@ -427,6 +428,11 @@ module ualink_turbo64
 				  m_axis_tdata_reg = dout_a;
          end
          READ_OPc8: begin  //first 8B
+              state_next = READ_OPc9;
+				  addr_a_next = addr_a + 1;
+				  m_axis_tdata_reg = dout_a;
+         end
+         READ_OPc9: begin  //first 8B
               state_next = WR_PKT;
 				  addr_a_next = addr_a + 1;
 				  m_axis_tdata_reg = dout_a;
@@ -482,8 +488,15 @@ always @(posedge axi_aclk) begin
          CS_state2 <= state[2];
          CS_state3 <= state[3];
          CS_we_a <= we_a;
-			CS_empty0 <= empty[0];
+    	 CS_empty0 <= empty[0];
          CS_addr_a0 <= addr_a[0];
+         CS_addr_a1 <= addr_a[1];
+         CS_addr_a2 <= addr_a[2];
+         CS_addr_a3 <= addr_a[3];
+         CS_addr_a4 <= addr_a[4];
+         CS_addr_a5 <= addr_a[5];
+         CS_addr_a6 <= addr_a[6];
+         CS_addr_a7 <= addr_a[7];
          CS_din_a0 <= din_a[0];
          CS_m_axis_tvalid <= m_axis_tvalid;
 			CS_m_axis_tready <= m_axis_tready;
