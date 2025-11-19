@@ -108,9 +108,9 @@ module ualink_turbo64
 
    parameter NUM_QUEUES_WIDTH = log2(NUM_QUEUES);
 
-   parameter NUM_STATES = 21;
+   parameter NUM_STATES = 24;
    parameter IDLE = 0;
-   parameter WR_PKT = 1;
+   parameter PKT_PROC = 1;
    parameter READ_OPc1 = 2;
    parameter READ_OPc2 = 3;
    parameter READ_OPc3 = 4;
@@ -130,6 +130,9 @@ module ualink_turbo64
    parameter WRITE_OPc7 = 17;
    parameter WRITE_OPc8 = 18;
    parameter WRITE_OPc9 = 19;
+   parameter START_MAC = 21;
+   parameter KV_SET = 22;
+   parameter KV_GET = 23;
 
    localparam MAX_PKT_SIZE = 2000; // In bytes
    localparam IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_M_AXIS_DATA_WIDTH / 8));
@@ -155,8 +158,8 @@ module ualink_turbo64
    reg [NUM_QUEUES_WIDTH-1:0]          cur_queue;
    reg [NUM_QUEUES_WIDTH-1:0]          cur_queue_next;
 
-   reg [NUM_STATES-1:0]                state;
-   reg [NUM_STATES-1:0]                state_next;
+   reg [NUM_STATES-1:0]                state, state_next;
+   reg MAC_start, MAC_start_next;
    reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg = "abcdefgh"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d1_reg =   "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d2_reg = "00000000000000000000000000000000"; //register to hold read response data
@@ -200,7 +203,25 @@ module ualink_turbo64
     .din_b(din_b),
     .dout_b(dout_b)
    );
-   
+
+/* mac_unit
+#(
+   .DATA_WIDTH(DATA_WIDTH),
+   .ARRAY_SIZE(ARRAY_SIZE)
+)
+mac_16x8_inst
+(
+   .clk(axi_aclk),
+   .rst(~axi_resetn),
+   .start_mac(MAC_start),
+   .addrb(addr_b),
+   .enb(1),
+   .doutb_a(),  //unused
+   .doutb_b(), //unused
+   .mac_result(), //unused since written to mem
+   .status_done()  //unused
+);      
+*/
    generate
    genvar i;
    for(i=0; i<NUM_QUEUES; i=i+1) begin: in_arb_queues
@@ -271,7 +292,7 @@ module ualink_turbo64
    
    //assign m_axis_tdata = fifo_out_tdata[cur_queue];
    //assign m_axis_tdata = (state != (READ_OPc2 || READ_OPc3)) ? fifo_out_tdata[cur_queue] : m_axis_tdata_reg;  //slam read data into output stream
-   assign m_axis_tdata = (state == (IDLE || WR_PKT)) ?  fifo_out_tdata[cur_queue] : m_axis_tdata_reg;
+   assign m_axis_tdata = (state == (IDLE || PKT_PROC)) ?  fifo_out_tdata[cur_queue] : m_axis_tdata_reg;
 	
    assign m_axis_tlast = fifo_out_tlast[cur_queue];  //pulse last on read data cycle 
    //assign m_axis_tlast = (state != READ_OPc3) ? fifo_out_tlast[cur_queue] : 1'b1;  //pulse last on read data cycle 
@@ -300,7 +321,7 @@ module ualink_turbo64
            if(!empty[cur_queue]) begin
 			     // check if pkt is on the AXIS 
               if(m_axis_tready) begin
-                 state_next = WR_PKT;
+                 state_next = PKT_PROC;
                  rd_en[cur_queue] = 1;
              end
            end
@@ -310,7 +331,7 @@ module ualink_turbo64
    	end //end idle state 0x00
 
         /* wait until eop */
-        WR_PKT: begin
+        PKT_PROC: begin
            /* if this is the last word then write it and get out */
            if(m_axis_tready & m_axis_tlast) begin
               state_next = IDLE;
@@ -331,13 +352,36 @@ module ualink_turbo64
            state_next = READ_OPc1; // states 2,3,4,5,6,7,8,9
   		    we_a_next = 0;
 	    	end //if
-		else begin  //fail read/write quals
+		  else if ((frame_h0d4_reg[63:48]) ==  16'h0345) begin  //Kickstart MAC
+            state_next = START_MAC; 
+  		      MAC_start_next = 1;
+	    	end //if
+         else if ((frame_h0d4_reg[63:48]) ==  16'h0445) begin  //Fix for UDP decode of memcached SET
+            state_next = KV_SET; 
+	    	end //if
+         else if ((frame_h0d4_reg[63:48]) ==  16'h0545) begin  //Fix for UDP decode of memcached GET
+            state_next = KV_GET; 
+	     	end //if		
+
+
+      
+      else begin  //fail read/write quals
 			    we_a_next = 0;
 	         	end  //read
                end  //progress regular packet
-             end  //WR_PKT state
+             end  //PKT_PROC state
 
-         
+         KV_SET: begin  //KV_SET, get Key, hash on key for address, write value to address
+              state_next = PKT_PROC;
+            end
+         KV_GET: begin  //KV_GET, reverse hash key, read value from address, send back
+              state_next = PKT_PROC;
+            end
+
+         START_MAC: begin  //MAC process, for now assume one cycle
+              state_next = PKT_PROC;
+              MAC_start_next = 0;
+			end
          WRITE_OPc0: begin  //grab address from Header 5
               state_next = WRITE_OPc1;
 				  addr_a_next = s_axis_tdata_0[63:56]; //frame_h0d3_reg[63:56];  //8'b00; //dummy addr
@@ -384,13 +428,11 @@ module ualink_turbo64
 				  din_a = frame_h0d4_reg;
          end
          WRITE_OPc9: begin 
-              state_next = WR_PKT;
+              state_next = PKT_PROC;
 				  addr_a_next = addr_a + 1;
 				  din_a = frame_h0d4_reg;
               we_a_next = 0;
          end
-
-
          READ_OPc1: begin  //first 8B
               state_next = READ_OPc2;
 				  addr_a_next = addr_a + 1;
@@ -433,7 +475,7 @@ module ualink_turbo64
 				  m_axis_tdata_reg = dout_a;
          end
          READ_OPc9: begin  //first 8B
-              state_next = WR_PKT;
+              state_next = PKT_PROC;
 				  addr_a_next = addr_a + 1;
 				  m_axis_tdata_reg = dout_a;
          end
@@ -454,6 +496,7 @@ module ualink_turbo64
          cur_queue <= cur_queue_next;
          we_a <= we_a_next;
          addr_a <= addr_a_next;
+         MAC_start <= MAC_start_next;
          frame_h0d4_reg <= frame_h0d3_reg;
          frame_h0d3_reg <= frame_h0d2_reg;
          frame_h0d2_reg <= frame_h0d1_reg;
