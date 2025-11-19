@@ -12,7 +12,8 @@ public:
     RawEth sock_interface;
     std::string src_mac;
     std::string dst_mac;
-    int recv_timeout_ms = 200;
+    int ack_timeout_ms = 200;
+    int read_timeout_ms = 200;
 
     bool send_batch_wait_ack (std::vector<std::array<uint8_t,226>>& payload_vec, uint64_t mem_addr, uint8_t op, uint8_t tag) {
         for (int i = 0; i < payload_vec.size(); i++) {
@@ -31,13 +32,18 @@ public:
             sock_interface.send_on_wire(frame, bytes_to_send);
         }
 
-        if (wait_ack(recv_timeout_ms)) return true;
+        if (op == 2) {
+            return wait_ack(ack_timeout_ms);
+        } else if (op == 1) {
+            std::vector<std::array<uint8_t,226>> response_vec;
+            return wait_read(read_timeout_ms, payload_vec.size(), response_vec);
+        }
+
         return false;
     }
 
     bool wait_ack (int timeout_ms) {
         auto start = std::chrono::steady_clock::now();
-        //std::array<uint8_t, 256> buf{};
         std::vector<uint8_t> buf(256);
         while (true) {
             bool receive_ok = sock_interface.recv_on_wire(buf.data(), 256);
@@ -51,6 +57,28 @@ public:
             }
         }
         return true;
+    }
+
+    bool wait_read (int timeout_ms, int num_expected_read_frames, std::vector<std::array<uint8_t,226>>& response_vec) {
+        auto start = std::chrono::steady_clock::now();
+        std::array<uint8_t,256> buf;
+        int num_actual_read_frames;
+        while (true) {
+            bool receive_ok = sock_interface.recv_on_wire(buf.data(), 256);
+            if (receive_ok) {
+                num_actual_read_frames++;
+                std::array<uint8_t,226> arr;
+                std::copy(buf.begin(), buf.begin() + arr.size(), arr.begin());
+                response_vec.push_back(arr);
+                if (num_actual_read_frames == num_expected_read_frames) return true;
+            }
+            int elapsed = (int)std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now() - start).count();
+            if (elapsed >= timeout_ms) { 
+                return false;
+            }
+        }
+        return false;
     }
 
     void send_ack (uint64_t mem_addr, uint8_t tag) {
