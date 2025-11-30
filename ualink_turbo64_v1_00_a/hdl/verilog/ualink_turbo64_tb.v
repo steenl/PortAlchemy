@@ -1,32 +1,31 @@
-/*******************************************************************************
- *
- *  Licence:
- *        This file is part of the NetFPGA 10G development base package.
- *
- *        This file is free code: you can redistribute it and/or modify it under
- *        the terms of the GNU Lesser General Public License version 2.1 as
- *        published by the Free Software Foundation.
- *
- *        This package is distributed in the hope that it will be useful, but
- *        WITHOUT ANY WARRANTY; without even the implied warranty of
- *        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *        Lesser General Public License for more details.
- *
- *        You should have received a copy of the GNU Lesser General Public
- *        License along with the NetFPGA source package.  If not, see
- *        http://www.gnu.org/licenses/.
+/***Steen Larsen with AI assistance
+  The intent of this testbench is to perform basic network driven read and write operations.  To mirror the scapy script:
+pktrd=Ether()/IP(dst="192.168.0.6") / UDP(dport=12345)/b"00000ZghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ234567890123"
+pktwr=Ether()/IP(dst="192.168.0.6") / UDP(dport=12345)/b"00000ZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+pktrd[IP].tos=0x01
+pktwr[IP].tos=0x02
+sendp(pktwr,iface="enp3s0f1")
+sendp(pktrd,iface="enp3s0f1")
+
+For now all is AXI_0, we leave artifacts of port interfaces 0-4 for future multiport testing.
+    
+
+
+
+
+ to run in Icarus simulator use:
+iverilog -o ualink_turbo64_tb.vvp .\ualink_turbo64_tb.v ualink_turbo64.v .\fallthrough_small_fifo_v2.v .\small_fifo_v3.v .\ualink_dpmem.v
+vvp ualink_turbo64_tb.vvp
+gtkwave.exe .\ualink_turbo_tb.vcd
+
+
  *
  */
 
-
-// to run in Icarus simulator use:
-// iverilog -o ualink_turbo64_tb.vvp .\ualink_turbo64_tb.v ualink_turbo64.v .\fallthrough_small_fifo_v2.v .\small_fifo_v3.v .\ualink_dpmem.v
-// vvp ualink_turbo64_tb.vvp
-// gtkwave.exe .\ualink_turbo_tb.vcd
-
-
 `timescale 1 ns / 1ps
 module testbench();
+
+   // parameter CLK_PERIOD = 10; // 10ns = 100MHz
 
     reg clk, reset;
     reg [63:0]  tdata[4:0];
@@ -42,11 +41,30 @@ module testbench();
     reg [3:0] random = 0;
 
     integer i;
+// wireshark displays in little-endian format, so we need to reverse byte order when constructing test packets
+// chipscope has already reversed the byte order for us internally so we need to follow that convention here.
+    wire [63:0] wr_w0 = 64'h0000FFFFFFFFFFFF; // Destination MAC with write opcode
+    wire [63:0] wr_w1 = 64'h0245000800000000; // Source MAC + EtherType + write opcode
+    wire [63:0] wr_w2 = 64'h1140000001000600;
+    wire [63:0] wr_w3 = 64'hA8c000000000DCB9;
+    wire [63:0] wr_w4 = 64'h4C00393035000600;
+    wire [63:0] wr_w5 = 64'h5A30303030309896;  //address or key field
+    wire [63:0] wr_w6 = 64'h4141414141414141;  //1of8 data words
+    wire [63:0] wr_w7 = 64'h4141414141414141;  //
+    wire [63:0] wr_w8 = 64'h4141414141414141;
+    wire [63:0] wr_w9 = 64'h4141414141414141;  //4
+    wire [63:0] wr_wa = 64'h4141414141414141;
+    wire [63:0] wr_wb = 64'h4141414141414141;
+    wire [63:0] wr_wc = 64'h4141414141414141;
+    wire [63:0] wr_wd = 64'h4141414141414141;  //8 of 8 data words
 
-    wire [63:0] header_word_0  = 64'hEFBEFECAFECAFECA; // Destination MAC with write opcode
-    wire [63:0] header_word_1  = 64'h00000008EFBEEFBE; // Source MAC + EtherType
-    wire [63:0] header_word_0a = 64'hEFBEFECAFECAFFCA; // Destination MAC  read opcode
-    wire [63:0] header_word_1a = 64'h00000008EFBEEEBE; // Source MAC + EtherType
+
+    wire [63:0] rd_w0 = 64'h0000FFFFFFFFFFFF; // Destination MAC  read opcode
+    wire [63:0] rd_w1 = 64'h0145000800000000; // Source MAC + EtherType
+    wire [63:0] rd_w2 = 64'h1140000001005C00;
+    wire [63:0] rd_w3 = 64'hA8C000000000E1B9;
+    wire [63:0] rd_w4 = 64'h4800393035000600;
+    wire [63:0] rd_w5 = 64'h5A3030303030E1F4;  //address or key field
 
     localparam HEADER_0 = 0;
     localparam HEADER_1 = 1;
@@ -74,7 +92,7 @@ module testbench();
 
         case(state)
             HEADER_0: begin
-                tdata[random] = header_word_0;
+                tdata[random] = wr_w0;
                 if(tready[random]) begin
                     state_next = HEADER_1;
                 end
@@ -90,7 +108,7 @@ module testbench();
 		 tvalid_4 = 1;
             end
             HEADER_1: begin
-                tdata[random] = header_word_1;
+                tdata[random] = wr_w1;
                 if(tready[random]) begin
                     state_next = PAYLOAD;
                 end
@@ -99,20 +117,57 @@ module testbench();
                 tdata[random] = {8{counter}};
                 if(tready[random]) begin
                     counter_next = counter + 1'b1;
+                    if(counter == 8'h00) begin
+                       tdata[random] = wr_w2;
+                    end
+                    if(counter == 8'h01) begin
+                       tdata[random] = wr_w3;
+                    end
+                    if(counter == 8'h02) begin
+                       tdata[random] = wr_w4;
+                    end
+                    if(counter == 8'h03) begin
+                       tdata[random] = wr_w5;
+                    end
+                    if(counter == 8'h04) begin
+                       tdata[random] = wr_w6;
+                    end
+                    if(counter == 8'h05) begin
+                       tdata[random] = wr_w7;
+                    end
+                    if(counter == 8'h06) begin
+                       tdata[random] = wr_w8;
+                    end
+                    if(counter == 8'h07) begin
+                       tdata[random] = wr_w9;
+                    end
+                    if(counter == 8'h08) begin
+                       tdata[random] = wr_wa;
+                    end
+                    if(counter == 8'h09) begin
+                       tdata[random] = wr_wb;
+                    end
+                    if(counter == 8'h0a) begin
+                       tdata[random] = wr_wc;
+                    end
+                    if(counter == 8'h0b) begin
+                       tdata[random] = wr_wd;
+                    end
+
                     if(counter == 8'h1F) begin
                         state_next = DEAD;
                         counter_next = 8'b0;
                         tlast[random] = 1'b1;
                     end
                 end
-            end
+            end  //PAYLOAD state
 
 //try a read operation now
 
             HEADER_0a: begin
-                tdata[random] = header_word_0a;
-                tdata[0] = header_word_0a;
+                tdata[random] = rd_w0;
                 if(tready[random]) begin
+                    counter_next = 8'b0;
                     state_next = HEADER_1a;
                 end
          if (random == 0)
@@ -125,18 +180,43 @@ module testbench();
 		 tvalid_0 = 1;  //force to port 0 for easier debugging
 	       else if (random == 4)
 		 tvalid_4 = 1;
-            end
+            end  //HEADER_0a
             HEADER_1a: begin
-                tdata[random] = header_word_1a;
-                tdata[0] = header_word_1a;
+                tdata[random] = {8{counter}};
+
+                // tdata[random] = rd_w1;
                 if(tready[random]) begin
-                    state_next = PAYLOAD;
+                    counter_next = counter + 1'b1;
+                    if(counter == 8'h00) begin
+                       tdata[random] = rd_w1;
+                    end
+                    if(counter == 8'h01) begin
+                       tdata[random] = rd_w2;
+                    end
+                    if(counter == 8'h02) begin
+                       tdata[random] = rd_w3;
+                    end
+                    if(counter == 8'h03) begin
+                       tdata[random] = rd_w4;
+                    end
+                    if(counter == 8'h04) begin
+                       tdata[random] = rd_w5;
+                    end
+
+                
+                if(counter == 8'h17) begin
+                    state_next = DEAD;
+                    counter_next = 8'b0;
+                    tlast[random] = 1'b1;
                 end
-            end
+                end
+            end  //HEADER_1a
 
 
             DEAD: begin
-
+         //   for (i = 0; i < 50; i = i + 1) begin
+         //        @(posedge clk);
+         //   end
                 counter_next = counter + 1'b1;
                 tlast[random] = 1'b0;
          	tvalid_0 = 0;
@@ -144,10 +224,10 @@ module testbench();
 		tvalid_2 = 0;
 		tvalid_3 = 0;
 		tvalid_4 = 0;
-                if(counter[7]==1'b1) begin
+                if(counter[3]==1'b1) begin
                    counter_next = 8'b0;
-		           random = $random % 5;  // lock to 0 for easier debugging
-                   if (random == 3)  begin  //do a read op
+		           random = 0; //$random % 5;  // lock to 0 for easier debugging
+                   if (random == 0)  begin  //do a read op
                      state_next = HEADER_0a;
                      $display("Next random = %d", random);
                    end
@@ -175,11 +255,11 @@ module testbench();
       clk   = 1'b0;
 
       $display("[%t] : System Reset Asserted...", $realtime);
-      $dumpfile("ualink_turbo_tb.vcd");
+      $dumpfile("ualink_turbo64_tb.vcd");
       $dumpvars(0, testbench);
 
       reset = 1'b1;
-      for (i = 0; i < 50; i = i + 1) begin
+      for (i = 0; i < 2; i = i + 1) begin
                  @(posedge clk);
       end
       $display("[%t] : System Reset De-asserted...", $realtime);

@@ -51,7 +51,7 @@ module tb_dual_port_ram_8x64;
     // Test stimulus
     initial begin
         // Initialize waveform dump
-        $dumpfile("dual_port_ram.vcd");
+        $dumpfile("ualink_dpmem_tb.vcd");
         $dumpvars(0, tb_dual_port_ram_8x64);
         
         // Initialize signals

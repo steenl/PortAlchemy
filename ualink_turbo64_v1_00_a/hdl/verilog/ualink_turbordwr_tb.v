@@ -281,7 +281,7 @@ module tb_ualink_turbo64;
     // Test stimulus
     initial begin
         // Initialize waveform dump
-        $dumpfile("ualink_turbo64_tb.vcd");
+        $dumpfile("ualink_turbordwr_tb.vcd");
         $dumpvars(0, tb_ualink_turbo64);
         
         $display("========================================");
