@@ -120,6 +120,8 @@ module ualink_turbo64
    parameter READ_OPc7 = 8;
    parameter READ_OPc8 = 9;
    parameter READ_OPc9 = 20;
+   parameter READ_OPca = 21;
+
    parameter WRITE_OPc0 = 10;
    parameter WRITE_OPc1 = 11;
    parameter WRITE_OPc2 = 12;
@@ -130,9 +132,10 @@ module ualink_turbo64
    parameter WRITE_OPc7 = 17;
    parameter WRITE_OPc8 = 18;
    parameter WRITE_OPc9 = 19;
-   parameter START_MAC = 21;
-   parameter KV_SET = 22;
-   parameter KV_GET = 23;
+
+   parameter START_MAC = 22;
+   parameter KV_SET = 23;
+   parameter KV_GET = 24;
 
    localparam MAX_PKT_SIZE = 2000; // In bytes
    localparam IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_M_AXIS_DATA_WIDTH / 8));
@@ -161,10 +164,11 @@ module ualink_turbo64
    reg [NUM_STATES-1:0]                state, state_next;
    reg MAC_start, MAC_start_next;
    reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg = "abcdefgh"; //register to hold read response data
-   reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d1_reg =   "00000000000000000000000000000000"; //register to hold read response data
+   reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d1_reg = "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d2_reg = "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d3_reg = "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d4_reg = "00000000000000000000000000000000"; //register to hold read response data
+reg [C_M_AXIS_DATA_WIDTH - 1:0] dmark = "DEADBEEFdeadbeefdeadbeefDEADBEEF"; //dummy marker    
 
    reg [15:0] ualink_opcode; //opcode from command packet
 
@@ -385,54 +389,51 @@ mac_16x8_inst
          WRITE_OPc0: begin  //grab address from Header 5
               state_next = WRITE_OPc1;
 				  addr_a_next = s_axis_tdata_0[63:56]; //frame_h0d3_reg[63:56];  //8'b00; //dummy addr
+              we_a_next = 1;
+              din_a = dmark;
 			end
-         WRITE_OPc1: begin  // D1
+         WRITE_OPc1: begin  // this cycle writes 1st word and preps for next
               state_next = WRITE_OPc2;
 				  addr_a_next = addr_a + 1;
-				  din_a = frame_h0d4_reg;
-              we_a_next = 1;
+				  din_a = s_axis_tdata_0;
          end
          WRITE_OPc2: begin   //D0
               state_next = WRITE_OPc3;
 				  addr_a_next = addr_a + 1;
-              din_a = frame_h0d4_reg;
+              din_a = s_axis_tdata_0;
          end
          WRITE_OPc3: begin  
               state_next = WRITE_OPc4;
 				  addr_a_next = addr_a + 1;
-				  din_a = frame_h0d4_reg;
+				  din_a = s_axis_tdata_0;
          end
          WRITE_OPc4: begin  
               state_next = WRITE_OPc5;
 				  addr_a_next = addr_a + 1;
-				  din_a = frame_h0d4_reg;
+				  din_a = s_axis_tdata_0;
          end
          WRITE_OPc5: begin 
               state_next = WRITE_OPc6;
 				  addr_a_next = addr_a + 1;
-				  din_a = frame_h0d4_reg;
+				  din_a = s_axis_tdata_0;
          end
          WRITE_OPc6: begin  
               state_next = WRITE_OPc7;
 				  addr_a_next = addr_a + 1;
-				  din_a = frame_h0d4_reg;
+				  din_a = s_axis_tdata_0;
          end
          WRITE_OPc7: begin  
               state_next = WRITE_OPc8;
 				  addr_a_next = addr_a + 1;
-				  din_a = frame_h0d4_reg;
+				  din_a = s_axis_tdata_0;
          end
-         WRITE_OPc8: begin  
-              state_next = WRITE_OPc9;
-				  addr_a_next = addr_a + 1;
-				  din_a = frame_h0d4_reg;
-         end
-         WRITE_OPc9: begin 
+         WRITE_OPc8: begin  //prepare for final word.
               state_next = PKT_PROC;
 				  addr_a_next = addr_a + 1;
-				  din_a = frame_h0d4_reg;
+				  din_a = s_axis_tdata_0;
               we_a_next = 0;
          end
+
          READ_OPc1: begin  //first 8B
               state_next = READ_OPc2;
 				  addr_a_next = addr_a + 1;
@@ -475,11 +476,15 @@ mac_16x8_inst
 				  m_axis_tdata_reg = dout_a;
          end
          READ_OPc9: begin  //first 8B
+              state_next = READ_OPca;
+				  addr_a_next = addr_a + 1;
+				  m_axis_tdata_reg = dout_a;
+         end
+         READ_OPca: begin  //first 8B
               state_next = PKT_PROC;
 				  addr_a_next = addr_a + 1;
 				  m_axis_tdata_reg = dout_a;
          end
-         
 
       endcase // case(state)
    end // always @ (*)
