@@ -121,6 +121,7 @@ module ualink_turbo64
    parameter READ_OPc8 = 9;
    parameter READ_OPc9 = 20;
    parameter READ_OPca = 21;
+   parameter READ_OPcb = 22;
 
    parameter WRITE_OPc0 = 10;
    parameter WRITE_OPc1 = 11;
@@ -163,7 +164,8 @@ module ualink_turbo64
 
    reg [NUM_STATES-1:0]                state, state_next;
    reg MAC_start, MAC_start_next;
-   reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg = "abcdefgh"; //register to hold read response data
+   reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg      = "01234567"; //register to hold read response data
+   reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg_next = "01234567"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d1_reg = "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d2_reg = "00000000000000000000000000000000"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d3_reg = "00000000000000000000000000000000"; //register to hold read response data
@@ -438,52 +440,57 @@ mac_16x8_inst
               state_next = READ_OPc2;
 				  addr_a_next = addr_a + 1;
            addr_a_next = s_axis_tdata_0[63:56];   //frame_h0d2_reg[63:56]; // 8'h0;  //replace with parsed addr
-				  m_axis_tdata_reg = dout_a;
+				  m_axis_tdata_reg_next = dout_a;
          end
          READ_OPc2: begin  // 8B
               state_next = READ_OPc3;
 				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg = dout_a;
+				  m_axis_tdata_reg_next = dout_a;
          end
          READ_OPc3: begin  // 8B
               state_next = READ_OPc4;
 				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg = dout_a;
+				  m_axis_tdata_reg_next = dout_a;
          end
          READ_OPc4: begin  // 8B
               state_next = READ_OPc5;
 				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg = dout_a;
+				  m_axis_tdata_reg_next = dout_a;
          end
          READ_OPc5: begin  // 8B
               state_next = READ_OPc6;
 				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg = dout_a;
+				  m_axis_tdata_reg_next = dout_a;
          end
          READ_OPc6: begin  //first 8B
               state_next = READ_OPc7;
 				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg = dout_a;
+				  m_axis_tdata_reg_next = dout_a;
          end
          READ_OPc7: begin  //first 8B
               state_next = READ_OPc8;
 				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg = dout_a;
+				  m_axis_tdata_reg_next = dout_a;
          end
          READ_OPc8: begin  //first 8B
               state_next = READ_OPc9;
 				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg = dout_a;
+				  m_axis_tdata_reg_next = dout_a;
          end
          READ_OPc9: begin  //first 8B
               state_next = READ_OPca;
 				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg = dout_a;
+				  m_axis_tdata_reg_next = dout_a;
          end
          READ_OPca: begin  //first 8B
+              state_next = READ_OPcb;
+				  addr_a_next = addr_a + 1;
+				  m_axis_tdata_reg_next = dout_a;
+         end
+         READ_OPcb: begin  //first 8B
               state_next = PKT_PROC;
 				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg = dout_a;
+				  m_axis_tdata_reg_next = dout_a;
          end
 
       endcase // case(state)
@@ -501,6 +508,7 @@ mac_16x8_inst
          cur_queue <= cur_queue_next;
          we_a <= we_a_next;
          addr_a <= addr_a_next;
+	 m_axis_tdata_reg <= m_axis_tdata_reg_next;
          MAC_start <= MAC_start_next;
          frame_h0d4_reg <= frame_h0d3_reg;
          frame_h0d3_reg <= frame_h0d2_reg;
@@ -584,7 +592,7 @@ always @(posedge axi_aclk) begin
          CS_S_AXIS_TDATA15, CS_S_AXIS_TDATA14, CS_S_AXIS_TDATA13, CS_S_AXIS_TDATA12,
          CS_S_AXIS_TDATA11, CS_S_AXIS_TDATA10, CS_S_AXIS_TDATA9,  CS_S_AXIS_TDATA8,
          CS_S_AXIS_TDATA7,  CS_S_AXIS_TDATA6,  CS_S_AXIS_TDATA5,  CS_S_AXIS_TDATA4,
-         CS_S_AXIS_TDATA3,  CS_S_AXIS_TDATA2,  CS_S_AXIS_TDATA1,  CS_S_AXIS_TDATA0} <= s_axis_tdata_0;
+         CS_S_AXIS_TDATA3,  CS_S_AXIS_TDATA2,  CS_S_AXIS_TDATA1,  CS_S_AXIS_TDATA0} <= dout_a; // s_axis_tdata_0;
 end
 always @(posedge led_clk) begin
     if (!axi_resetn) begin
