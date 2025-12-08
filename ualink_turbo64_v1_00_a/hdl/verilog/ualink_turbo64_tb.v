@@ -46,17 +46,17 @@ module testbench();
     wire [63:0] wr_w0 = 64'h0000FFFFFFFFFFFF; // Destination MAC with write opcode
     wire [63:0] wr_w1 = 64'h0245000800000000; // Source MAC + EtherType + write opcode
     wire [63:0] wr_w2 = 64'h1140000001000600;
-    wire [63:0] wr_w3 = 64'hA8c000000000DCB9;
-    wire [63:0] wr_w4 = 64'h4C00393035000600;
-    wire [63:0] wr_w5 = 64'h5A30303030309896;  //address or key field
-    wire [63:0] wr_w6 = 64'h4141414141414141;  //1of8 data words
-    wire [63:0] wr_w7 = 64'h4141414141414141;  //
-    wire [63:0] wr_w8 = 64'h4141414141414141;
-    wire [63:0] wr_w9 = 64'h4141414141414141;  //4
-    wire [63:0] wr_wa = 64'h4141414141414141;
-    wire [63:0] wr_wb = 64'h4141414141414141;
-    wire [63:0] wr_wc = 64'h4141414141414141;
-    wire [63:0] wr_wd = 64'h4141414141414141;  //8 of 8 data words
+    wire [63:0] wr_w3 = 64'hA8c000000000D9B9;
+    wire [63:0] wr_w4 = 64'h4F00393035000600; //a
+    wire [63:0] wr_w5 = 64'h5A30303030309896;  //address or key field 0x3030305A
+    wire [63:0] wr_w6 = 64'h4847464544434241;  //1of8 data words
+    wire [63:0] wr_w7 = 64'h504F4E4D4C4B4A49;  //
+    wire [63:0] wr_w8 = 64'h5857565554535251;
+    wire [63:0] wr_w9 = 64'h6665646362615A59;  //4
+    wire [63:0] wr_wa = 64'h6E6D6C6B6A696867;
+    wire [63:0] wr_wb = 64'h767574737271706F;
+    wire [63:0] wr_wc = 64'h333231307A797877;
+    wire [63:0] wr_wd = 64'h6261393837363534;  //8 of 8 data words
 
 
     wire [63:0] rd_w0 = 64'h0000FFFFFFFFFFFF; // Destination MAC  read opcode
