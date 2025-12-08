@@ -1,7 +1,7 @@
 /***Steen Larsen with AI assistance
   The intent of this testbench is to perform basic network driven read and write operations.  To mirror the scapy script:
-pktrd=Ether()/IP(dst="192.168.0.6") / UDP(dport=12345)/b"00000ZghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ234567890123"
-pktwr=Ether()/IP(dst="192.168.0.6") / UDP(dport=12345)/b"00000ZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+pktwr=Ether()/IP(dst="192.168.0.6") / UDP(dport=12345)/b"00000ZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789AB"
+pktrd=Ether()/IP(dst="192.168.0.6") / UDP(dport=12345)/b"00000ZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 pktrd[IP].tos=0x01
 pktwr[IP].tos=0x02
 sendp(pktwr,iface="enp3s0f1")
@@ -65,6 +65,14 @@ module testbench();
     wire [63:0] rd_w3 = 64'hA8C000000000E1B9;
     wire [63:0] rd_w4 = 64'h4800393035000600;
     wire [63:0] rd_w5 = 64'h5A3030303030E1F4;  //address or key field
+    wire [63:0] rd_w6 = 64'h4141414141414141;  //1of8 data words all AAAAAAAA 
+    wire [63:0] rd_w7 = 64'h4141414141414141;  //
+    wire [63:0] rd_w8 = 64'h4141414141414141;
+    wire [63:0] rd_w9 = 64'h4141414141414141;  //4
+    wire [63:0] rd_wa = 64'h4141414141414141;
+    wire [63:0] rd_wb = 64'h4141414141414141;
+    wire [63:0] rd_wc = 64'h4141414141414141;
+    wire [63:0] rd_wd = 64'h4141414141414141;  //8 of 8 data words
 
     localparam HEADER_0 = 0;
     localparam HEADER_1 = 1;
