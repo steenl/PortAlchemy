@@ -47,7 +47,7 @@ module testbench();
     wire [63:0] wr_w1 = 64'h0245000800000000; // Source MAC + EtherType + write opcode
     wire [63:0] wr_w2 = 64'h1140000001000600;
     wire [63:0] wr_w3 = 64'hA8c000000000D9B9;
-    wire [63:0] wr_w4 = 64'h4F00393035000600; //a
+    wire [63:0] wr_w4 = 64'h4F00393035000600; //0x3039 is the UDP port number 12345
     wire [63:0] wr_w5 = 64'h5A30303030309896;  //address or key field 0x3030305A
     wire [63:0] wr_w6 = 64'h4847464544434241;  //1of8 data words
     wire [63:0] wr_w7 = 64'h504F4E4D4C4B4A49;  //
