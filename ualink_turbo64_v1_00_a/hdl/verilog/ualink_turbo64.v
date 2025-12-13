@@ -108,35 +108,15 @@ module ualink_turbo64
 
    parameter NUM_QUEUES_WIDTH = log2(NUM_QUEUES);
 
-   parameter NUM_STATES = 24;
+   parameter NUM_STATES = 7;
    parameter IDLE = 0;
    parameter PKT_PROC = 1;
-   parameter READ_OPc1 = 2;
-   parameter READ_OPc2 = 3;
-   parameter READ_OPc3 = 4;
-   parameter READ_OPc4 = 5;
-   parameter READ_OPc5 = 6;
-   parameter READ_OPc6 = 7;   
-   parameter READ_OPc7 = 8;
-   parameter READ_OPc8 = 9;
-   parameter READ_OPc9 = 20;
-   parameter READ_OPca = 21;
-   parameter READ_OPcb = 22;
+   parameter READ_OP =2;
 
-   parameter WRITE_OPc0 = 10;
-   parameter WRITE_OPc1 = 11;
-   parameter WRITE_OPc2 = 12;
-   parameter WRITE_OPc3 = 13;
-   parameter WRITE_OPc4 = 14;
-   parameter WRITE_OPc5 = 15;
-   parameter WRITE_OPc6 = 16;
-   parameter WRITE_OPc7 = 17;
-   parameter WRITE_OPc8 = 18;
-   parameter WRITE_OPc9 = 19;
-
-   parameter START_MAC = 22;
-   parameter KV_SET = 23;
-   parameter KV_GET = 24;
+   parameter WRITE_OP =3;
+   parameter START_MAC = 4;
+   parameter KV_SET = 5;
+   parameter KV_GET = 6;
 
    localparam MAX_PKT_SIZE = 2000; // In bytes
    localparam IN_FIFO_DEPTH_BIT = log2(MAX_PKT_SIZE/(C_M_AXIS_DATA_WIDTH / 8));
@@ -164,6 +144,8 @@ module ualink_turbo64
 
    reg [NUM_STATES-1:0]                state, state_next;
    reg MAC_start, MAC_start_next;
+   reg [3:0] write_cnt = 4'h0, write_cnt_next = 4'h0; // needs to count to 9 (0–8)
+   reg [3:0] read_cnt = 4'h0, read_cnt_next = 4'h0;   // needs to count to 11 (0–10)
    reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg      = "01234567"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg_next = "01234567"; //register to hold read response data
    reg [C_M_AXIS_DATA_WIDTH - 1:0] frame_h0d1_reg = "00000000000000000000000000000000"; //register to hold read response data
@@ -352,10 +334,10 @@ mac_16x8_inst
 					//decode command    
               if ((frame_h0d4_reg[63:48]) ==  16'h0245) begin  //write operation
                we_a_next = 0;
-		         state_next = WRITE_OPc0;
+		         state_next = WRITE_OP;
 		      end
 		  else if ((frame_h0d4_reg[63:48]) ==  16'h0145) begin  //read to addr 1
-           state_next = READ_OPc1; // states 2,3,4,5,6,7,8,9
+           state_next = READ_OP; // states 2,3,4,5,6,7,8,9
   		    we_a_next = 0;
 	    	end //if
 		  else if ((frame_h0d4_reg[63:48]) ==  16'h0345) begin  //Kickstart MAC
@@ -388,109 +370,63 @@ mac_16x8_inst
               state_next = PKT_PROC;
               MAC_start_next = 0;
 			end
-         WRITE_OPc0: begin  //grab address from Header 5
-              state_next = WRITE_OPc1;
-				  addr_a_next = s_axis_tdata_0[63:56]; //frame_h0d3_reg[63:56];  //8'b00; //dummy addr
-              we_a_next = 1;
-              din_a = dmark;
-			end
-         WRITE_OPc1: begin  // this cycle writes 1st word and preps for next
-              state_next = WRITE_OPc2;
-				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
-         end
-         WRITE_OPc2: begin   //D0
-              state_next = WRITE_OPc3;
-				  addr_a_next = addr_a + 1;
-              din_a = s_axis_tdata_0;
-         end
-         WRITE_OPc3: begin  
-              state_next = WRITE_OPc4;
-				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
-         end
-         WRITE_OPc4: begin  
-              state_next = WRITE_OPc5;
-				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
-         end
-         WRITE_OPc5: begin 
-              state_next = WRITE_OPc6;
-				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
-         end
-         WRITE_OPc6: begin  
-              state_next = WRITE_OPc7;
-				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
-         end
-         WRITE_OPc7: begin  
-              state_next = WRITE_OPc8;
-				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
-         end
-         WRITE_OPc8: begin  //prepare for final word.
-              state_next = PKT_PROC;
-				  addr_a_next = addr_a + 1;
-				  din_a = s_axis_tdata_0;
-              we_a_next = 0;
+
+         WRITE_OP: begin
+            // defaults
+            state_next     = WRITE_OP;
+            addr_a_next    = addr_a;
+            we_a_next      = 1;
+            din_a          = s_axis_tdata_0;
+            write_cnt_next = write_cnt;
+
+            if (write_cnt == 0) begin
+               // first cycle: grab address + write marker
+               addr_a_next    = s_axis_tdata_0[63:56];
+               din_a          = dmark;
+               write_cnt_next = write_cnt + 1;
+            end
+            else if (write_cnt < 8) begin
+               // middle data words
+               addr_a_next    = addr_a + 1;
+               din_a          = s_axis_tdata_0;
+               write_cnt_next = write_cnt + 1;
+            end
+            else begin
+               // final word
+               addr_a_next    = addr_a + 1;
+               din_a          = s_axis_tdata_0;
+               we_a_next      = 0;
+               write_cnt_next = 0;
+               state_next     = PKT_PROC;
+            end
          end
 
-         READ_OPc1: begin  //first 8B
-              state_next = READ_OPc2;
-				  addr_a_next = addr_a + 1;
-           addr_a_next = s_axis_tdata_0[63:56];   //frame_h0d2_reg[63:56]; // 8'h0;  //replace with parsed addr
-				  m_axis_tdata_reg_next = dout_a;
-         end
-         READ_OPc2: begin  // 8B
-              state_next = READ_OPc3;
-				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg_next = dout_a;
-         end
-         READ_OPc3: begin  // 8B
-              state_next = READ_OPc4;
-				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg_next = dout_a;
-         end
-         READ_OPc4: begin  // 8B
-              state_next = READ_OPc5;
-				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg_next = dout_a;
-         end
-         READ_OPc5: begin  // 8B
-              state_next = READ_OPc6;
-				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg_next = dout_a;
-         end
-         READ_OPc6: begin  //first 8B
-              state_next = READ_OPc7;
-				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg_next = dout_a;
-         end
-         READ_OPc7: begin  //first 8B
-              state_next = READ_OPc8;
-				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg_next = dout_a;
-         end
-         READ_OPc8: begin  //first 8B
-              state_next = READ_OPc9;
-				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg_next = dout_a;
-         end
-         READ_OPc9: begin  //first 8B
-              state_next = READ_OPca;
-				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg_next = dout_a;
-         end
-         READ_OPca: begin  //first 8B
-              state_next = READ_OPcb;
-				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg_next = dout_a;
-         end
-         READ_OPcb: begin  //first 8B
-              state_next = PKT_PROC;
-				  addr_a_next = addr_a + 1;
-				  m_axis_tdata_reg_next = dout_a;
+         READ_OP: begin
+            // defaults
+            state_next                = READ_OP;
+            addr_a_next               = addr_a;
+            m_axis_tdata_reg_next     = m_axis_tdata_reg;
+            read_cnt_next             = read_cnt;
+
+            if (read_cnt == 0) begin
+               // first cycle: load base address
+               addr_a_next           = s_axis_tdata_0[63:56];
+               m_axis_tdata_reg_next = dout_a;
+               read_cnt_next         = read_cnt + 1;
+            end
+            else if (read_cnt < 10) begin
+               // middle reads
+               addr_a_next           = addr_a + 1;
+               m_axis_tdata_reg_next = dout_a;
+               read_cnt_next         = read_cnt + 1;
+            end
+            else begin
+               // final read
+               addr_a_next           = addr_a + 1;
+               m_axis_tdata_reg_next = dout_a;
+               read_cnt_next         = 0;
+               state_next            = PKT_PROC;
+            end
          end
 
       endcase // case(state)
@@ -500,7 +436,8 @@ mac_16x8_inst
       if(~axi_resetn) begin
          state <= IDLE;
          cur_queue <= 0;
-        // din_a <= 0;
+         write_cnt <= 0;
+         read_cnt <= 0;
          we_a <= 0;
       end
       else begin
@@ -513,6 +450,9 @@ mac_16x8_inst
          frame_h0d4_reg <= frame_h0d3_reg;
          frame_h0d3_reg <= frame_h0d2_reg;
          frame_h0d2_reg <= frame_h0d1_reg;
+         write_cnt <= write_cnt_next;
+        read_cnt <= read_cnt_next;
+
 		  end
    end
 
