@@ -343,9 +343,10 @@ mac_16x8_inst
             state_next = START_MAC; 
   		      MAC_start_next = 1;
 	    	end //if
-         else if ((frame_h0d4_reg[63:16]) ==  48'h206120746573) begin  //Fix for UDP decode of memcached SET "SET A "
+         else if ((s_axis_tdata_0[63:16]) ==  48'h206120746573) begin  //Fix for UDP decode of memcached SET "SET A " delayed from saxis0
             state_next = KV_SET; 
-            addr_a_next    = frame_h0d4_reg[15:8]; //grab key as address, single byte for now
+            addr_a_next    = s_axis_tdata_0[55:48]; //grab key as address, single byte for now
+            we_a_next      = 0;  //dead cycle before writes can occur
 	    	end //if
          else if ((frame_h0d4_reg[31:16]) ==  16'h0545) begin  //Fix for UDP decode of memcached GET
             state_next = KV_GET; 
@@ -363,24 +364,26 @@ mac_16x8_inst
             // defaults
             state_next     = KV_SET;
             addr_a_next    = addr_a;
-            we_a_next      = 1;
+            we_a_next      = 0;
             din_a          = s_axis_tdata_0;
             write_cnt_next = write_cnt;
 
             if (write_cnt == 0) begin
-               addr_a_next    = addr_a_next; //address from hash of key 
+               addr_a_next    = addr_a; //address from hash of key 
                din_a          = s_axis_tdata_0; //first data word
+               we_a_next      = 1;
                write_cnt_next = write_cnt + 1;
             end
-            else if (write_cnt < 7) begin
+            else if (write_cnt < 8) begin
                // middle data words
                addr_a_next    = addr_a + 1;
+               we_a_next    = 1;
                din_a          = s_axis_tdata_0;
                write_cnt_next = write_cnt + 1;
             end
             else begin
                // final word
-               addr_a_next    = addr_a + 1;
+               addr_a_next    = addr_a;
                din_a          = s_axis_tdata_0;
                we_a_next      = 0;
                write_cnt_next = 0;
@@ -473,9 +476,10 @@ mac_16x8_inst
          addr_a <= addr_a_next;
 	 m_axis_tdata_reg <= m_axis_tdata_reg_next;
          MAC_start <= MAC_start_next;
-         frame_h0d4_reg <= frame_h0d3_reg;
-         frame_h0d3_reg <= frame_h0d2_reg;
+         frame_h0d1_reg <= s_axis_tdata_0;
          frame_h0d2_reg <= frame_h0d1_reg;
+         frame_h0d3_reg <= frame_h0d2_reg;
+         frame_h0d4_reg <= frame_h0d3_reg;
          write_cnt <= write_cnt_next;
         read_cnt <= read_cnt_next;
 
@@ -487,7 +491,7 @@ mac_16x8_inst
          frame_h0d1_reg <= 0;
       end
       else begin
-         frame_h0d1_reg <= s_axis_tdata_0;
+       //  frame_h0d1_reg <= s_axis_tdata_0;
       end
       end // always
 

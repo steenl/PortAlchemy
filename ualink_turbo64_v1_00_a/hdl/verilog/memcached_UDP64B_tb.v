@@ -39,7 +39,7 @@ module testbench();
     wire [63:0] wr_w3 = 64'hA8c000000000D9B9;
     wire [63:0] wr_w4 = 64'h6800CB2B40C20100; //0x2BCB is UDP port number 11211 bits 16-31
     wire [63:0] wr_w5 = 64'h5A30303030309896;  //
-    wire [63:0] wr_w6 = 64'h2061207565730000;  //memcached set key=address is 6th byte  
+    wire [63:0] wr_w6 = 64'h2061207465730000;  //memcached set key="set <addr> " address is 6th byte  
     wire [63:0] wr_w7 = 64'h0A0D323720302030;  //memcached size of set decimal 72 (if 8B value, then it will be 8)
     wire [63:0] wr_w8 = 64'h4645454244414531;  //value word 1
     wire [63:0] wr_w9 = 64'h4645454244414532;  //2
@@ -152,6 +152,12 @@ module testbench();
                     end
                     if(counter == 8'h0b) begin
                        tdata[random] = wr_wd;
+                    end
+                    if(counter == 8'h0c) begin
+                       tdata[random] = wr_we;
+                    end
+                    if(counter == 8'h0d) begin
+                       tdata[random] = wr_wf;
                     end
 
                     if(counter == 8'h1F) begin
