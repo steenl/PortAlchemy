@@ -112,7 +112,6 @@ module ualink_turbo64
    parameter IDLE = 0;
    parameter PKT_PROC = 1;
    parameter READ_OP =2;
-
    parameter WRITE_OP =3;
    parameter START_MAC = 4;
    parameter KV_SET = 5;
@@ -332,11 +331,11 @@ mac_16x8_inst
                  ualink_opcode = m_axis_tdata[15:0];
                  $display("UAlink write opcode %h", ualink_opcode);
 					//decode command    
-              if ((frame_h0d4_reg[63:48]) ==  16'h0245) begin  //write operation
+              if ((frame_h0d4_reg[63:48]) ==  16'h0245) begin  //write operation found in 2nd word
                we_a_next = 0;
 		         state_next = WRITE_OP;
 		      end
-		  else if ((frame_h0d4_reg[63:48]) ==  16'h0145) begin  //read to addr 1
+		  else if ((frame_h0d4_reg[63:48]) ==  16'h0145) begin  //read detected in 2nd word
            state_next = READ_OP; // states 2,3,4,5,6,7,8,9
   		    we_a_next = 0;
 	    	end //if
@@ -344,10 +343,11 @@ mac_16x8_inst
             state_next = START_MAC; 
   		      MAC_start_next = 1;
 	    	end //if
-         else if ((frame_h0d4_reg[63:48]) ==  16'h0445) begin  //Fix for UDP decode of memcached SET
+         else if ((frame_h0d4_reg[63:16]) ==  48'h206120746573) begin  //Fix for UDP decode of memcached SET "SET A "
             state_next = KV_SET; 
+            addr_a_next    = frame_h0d4_reg[15:8]; //grab key as address, single byte for now
 	    	end //if
-         else if ((frame_h0d4_reg[63:48]) ==  16'h0545) begin  //Fix for UDP decode of memcached GET
+         else if ((frame_h0d4_reg[31:16]) ==  16'h0545) begin  //Fix for UDP decode of memcached GET
             state_next = KV_GET; 
 	     	end //if		
 
@@ -360,8 +360,34 @@ mac_16x8_inst
              end  //PKT_PROC state
 
          KV_SET: begin  //KV_SET, get Key, hash on key for address, write value to address
-              state_next = PKT_PROC;
+            // defaults
+            state_next     = KV_SET;
+            addr_a_next    = addr_a;
+            we_a_next      = 1;
+            din_a          = s_axis_tdata_0;
+            write_cnt_next = write_cnt;
+
+            if (write_cnt == 0) begin
+               addr_a_next    = addr_a_next; //address from hash of key 
+               din_a          = s_axis_tdata_0; //first data word
+               write_cnt_next = write_cnt + 1;
             end
+            else if (write_cnt < 7) begin
+               // middle data words
+               addr_a_next    = addr_a + 1;
+               din_a          = s_axis_tdata_0;
+               write_cnt_next = write_cnt + 1;
+            end
+            else begin
+               // final word
+               addr_a_next    = addr_a + 1;
+               din_a          = s_axis_tdata_0;
+               we_a_next      = 0;
+               write_cnt_next = 0;
+               state_next     = PKT_PROC;
+            end
+         end
+            
          KV_GET: begin  //KV_GET, reverse hash key, read value from address, send back
               state_next = PKT_PROC;
             end
