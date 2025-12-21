@@ -1,7 +1,23 @@
 /***Steen Larsen with AI assistance
   The intent of this testbench is to perform basic memcached UDP 64-byte packet SET and GET operations
 For now all is AXI_0, we leave artifacts of port interfaces 0-4 for future multiport testing.
-    
+
+Assumes UDP port 11211 is used for memcached operations at server IP address 192.168.0.2
+Client executes on 64B ascii values : 
+a.out 192.168.0.2 11211 set a 1EADBEEF2EADBEEF....8EADBEEF  
+a.out 192.168.0.2 11211 get a
+
+SET will look like : 
+0000   00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00   ..............E.
+0010   00 7c 47 c3 40 00 40 11 f4 ab 7f 00 00 01 7f 00   .|GÃ@.@.ô«......
+0020   00 01 c2 40 2b cb 00 68 fe 7b 12 34 00 00 00 01   ..Â@+Ë.hþ{.4....
+0030   00 00 73 65 74 20 61 20 30 20 30 20 37 32 0d 0a   ..set a 0 0 72..
+0040   44 45 41 44 42 45 45 46 31 32 33 34 31 32 33 34   DEADBEEF12341234
+0050   35 36 37 38 35 36 37 36 38 31 32 33 34 31 32 33   5678567681234123
+0060   34 35 36 37 38 35 36 37 38 31 32 33 34 31 32 33   4567856781234123
+0070   34 35 36 37 38 35 36 37 38 31 32 33 34 31 32 33   4567856781234123
+0080   34 31 32 33 34 31 32 33 0d 0a                     41234123..
+
 
  to run in Icarus simulator use:
 iverilog -o memcached_UDP64B_tb.vvp .\memcached_UDP64B_tb.v ualink_turbo64.v .\fallthrough_small_fifo_v2.v .\small_fifo_v3.v .\ualink_dpmem.v
