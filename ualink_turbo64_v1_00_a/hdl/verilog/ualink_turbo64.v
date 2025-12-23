@@ -343,17 +343,15 @@ mac_16x8_inst
             state_next = START_MAC; 
   		      MAC_start_next = 1;
 	    	end //if
-         else if ((s_axis_tdata_0[63:16]) ==  48'h206120746573) begin  //Fix for UDP decode of memcached SET "SET A " delayed from saxis0
+         else if ((s_axis_tdata_0[63:16]) ==  48'h206120746573) begin  //Fix for UDP decode of memcached SET "set a " from saxis0
             state_next = KV_SET; 
             addr_a_next    = s_axis_tdata_0[55:48]; //grab key as address, single byte for now
             we_a_next      = 0;  //dead cycle before writes can occur
 	    	end //if
-         else if ((frame_h0d4_reg[31:16]) ==  16'h0545) begin  //Fix for UDP decode of memcached GET
+         else if ((s_axis_tdata_0[63:16]) ==  48'h0D6120746567) begin  //memcached "get a" from saxis0
             state_next = KV_GET; 
 	     	end //if		
-
-
-      
+     
       else begin  //fail read/write quals
 			    we_a_next = 0;
 	         	end  //read
@@ -391,7 +389,7 @@ mac_16x8_inst
             end
          end
             
-         KV_GET: begin  //KV_GET, reverse hash key, read value from address, send back
+         KV_GET: begin  //KV_GET, read value from address, send back
               state_next = PKT_PROC;
             end
 

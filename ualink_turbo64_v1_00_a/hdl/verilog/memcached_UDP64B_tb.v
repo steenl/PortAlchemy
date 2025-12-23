@@ -2,22 +2,42 @@
   The intent of this testbench is to perform basic memcached UDP 64-byte packet SET and GET operations
 For now all is AXI_0, we leave artifacts of port interfaces 0-4 for future multiport testing.
 
-Assumes UDP port 11211 is used for memcached operations at server IP address 192.168.0.2
-Client executes on 64B ascii values : 
-a.out 192.168.0.2 11211 set a 1EADBEEF2EADBEEF....8EADBEEF  
-a.out 192.168.0.2 11211 get a
+#start memcached server on port 11211
+memcached -u nobody -m 64 -U 11211 &
 
-SET will look like : 
+# compile Kedar's code with: g++ udp_memcached.cpp
+
+./um 127.0.0.1 11211 set a 1EADBEEF2EADBEEF3EADBEEF4EADBEEF5EADBEEF6EADBEEF7EADBEEF8EADBEEF
+./um 127.0.0.1 11211 get a
+
+Below is the SET of 64B that will be simulated:
 0000   00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00   ..............E.
-0010   00 7c 47 c3 40 00 40 11 f4 ab 7f 00 00 01 7f 00   .|GÃ@.@.ô«......
-0020   00 01 c2 40 2b cb 00 68 fe 7b 12 34 00 00 00 01   ..Â@+Ë.hþ{.4....
-0030   00 00 73 65 74 20 61 20 30 20 30 20 37 32 0d 0a   ..set a 0 0 72..
-0040   44 45 41 44 42 45 45 46 31 32 33 34 31 32 33 34   DEADBEEF12341234
-0050   35 36 37 38 35 36 37 36 38 31 32 33 34 31 32 33   5678567681234123
-0060   34 35 36 37 38 35 36 37 38 31 32 33 34 31 32 33   4567856781234123
-0070   34 35 36 37 38 35 36 37 38 31 32 33 34 31 32 33   4567856781234123
-0080   34 31 32 33 34 31 32 33 0d 0a                     41234123..
+0010   00 74 14 89 40 00 40 11 27 ee 7f 00 00 01 7f 00   .t..@.@.'î......
+0020   00 01 c0 8b 2b cb 00 60 fe 73 12 34 00 00 00 01   ..À.+Ë.`þs.4....
+0030   00 00 73 65 74 20 61 20 30 20 30 20 36 34 0d 0a   ..set a 0 0 64..
+0040   31 45 41 44 42 45 45 46 32 45 41 44 42 45 45 46   1EADBEEF2EADBEEF
+0050   33 45 41 44 42 45 45 46 34 45 41 44 42 45 45 46   3EADBEEF4EADBEEF
+0060   35 45 41 44 42 45 45 46 36 45 41 44 42 45 45 46   5EADBEEF6EADBEEF
+0070   37 45 41 44 42 45 45 46 38 45 41 44 42 45 45 46   7EADBEEF8EADBEEF
+0080   0d 0a                                             ..
 
+GET will look like :
+
+get:
+0000   00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00   ..............E.
+0010   00 2b ed 69 40 00 40 11 4f 56 7f 00 00 01 7f 00   .+íi@.@.OV......
+0020   00 01 bd 5d 2b cb 00 17 fe 2a 12 34 00 00 00 01   ..½]+Ë..þ*.4....
+0030   00 00 67 65 74 20 61 0d 0a                        ..get a..
+response: 
+0000   00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00   ..............E.
+0010   00 79 17 4b 40 00 40 11 25 27 7f 00 00 01 7f 00   .y.K@.@.%'......
+0020   00 01 2b cb dd 54 00 65 fe 78 12 34 00 00 00 01   ..+ËÝT.eþx.4....
+0030   00 00 56 41 4c 55 45 20 61 20 30 20 36 34 0d 0a   ..VALUE a 0 64..
+0040   31 45 41 44 42 45 45 46 32 45 41 44 42 45 45 46   1EADBEEF2EADBEEF
+0050   33 45 41 44 42 45 45 46 34 45 41 44 42 45 45 46   3EADBEEF4EADBEEF
+0060   35 45 41 44 42 45 45 46 36 45 41 44 42 45 45 46   5EADBEEF6EADBEEF
+0070   37 45 41 44 42 45 45 46 38 45 41 44 42 45 45 46   7EADBEEF8EADBEEF
+0080   0d 0a 45 4e 44 0d 0a                              ..END..
 
  to run in Icarus simulator use:
 iverilog -o memcached_UDP64B_tb.vvp .\memcached_UDP64B_tb.v ualink_turbo64.v .\fallthrough_small_fifo_v2.v .\small_fifo_v3.v .\ualink_dpmem.v
@@ -49,7 +69,7 @@ module testbench();
 // wireshark displays in little-endian format, so we need to reverse byte order when constructing test packets
 // chipscope has already reversed the byte order for us internally so we need to follow that convention here.
 //wr_x is SET pkt and rd_x is GET pkt
-    wire [63:0] wr_w0 = 64'h0000FFFFFFFFFFFF; // Destination MAC with write opcode
+    wire [63:0] wr_w0 = 64'h0000000000000000; // Destination MAC with write opcode
     wire [63:0] wr_w1 = 64'h0045000800000000; // Source MAC + EtherType + write opcode
     wire [63:0] wr_w2 = 64'h1140000001000600;
     wire [63:0] wr_w3 = 64'hA8c000000000D9B9;
@@ -67,14 +87,14 @@ module testbench();
     wire [63:0] wr_wf = 64'h4645454244414538;  //8
 
 
-    wire [63:0] rd_w0 = 64'h0000FFFFFFFFFFFF; // Destination MAC  read opcode
-    wire [63:0] rd_w1 = 64'h0145000800000000; // Source MAC + EtherType
-    wire [63:0] rd_w2 = 64'h1140000001005C00;
-    wire [63:0] rd_w3 = 64'hA8C000000000E1B9;
-    wire [63:0] rd_w4 = 64'h4800393035000600;
-    wire [63:0] rd_w5 = 64'h5A3030303030E1F4;  //address or key field
-    wire [63:0] rd_w6 = 64'h4141414141414141;  //1of8 data words all AAAAAAAA 
-    wire [63:0] rd_w7 = 64'h4141414141414141;  //
+    wire [63:0] rd_w0 = 64'h0000000000000000; // Destination MAC  read opcode
+    wire [63:0] rd_w1 = 64'h0045000800000000; // Source MAC + EtherType
+    wire [63:0] rd_w2 = 64'h1140004069ED2B00;
+    wire [63:0] rd_w3 = 64'h007F0100007F564F;
+    wire [63:0] rd_w4 = 64'h1700CB2B5DBD0100;
+    wire [63:0] rd_w5 = 64'h0100000034122AFE;  //
+    wire [63:0] rd_w6 = 64'h0D61207465670000;  //get address "get a"
+    wire [63:0] rd_w7 = 64'h000000000000000A;  //
     wire [63:0] rd_w8 = 64'h4141414141414141;
     wire [63:0] rd_w9 = 64'h4141414141414141;  //4
     wire [63:0] rd_wa = 64'h4141414141414141;
@@ -224,6 +244,31 @@ module testbench();
                     if(counter == 8'h04) begin
                        tdata[random] = rd_w5;
                     end
+                    if(counter == 8'h05) begin
+                       tdata[random] = rd_w6;
+                    end
+                    if(counter == 8'h06) begin
+                       tdata[random] = rd_w7;
+                    end
+                    if(counter == 8'h07) begin
+                       tdata[random] = rd_w8;
+                    end
+                    if(counter == 8'h08) begin
+                       tdata[random] = rd_w9;
+                    end
+                    if(counter == 8'h09) begin
+                       tdata[random] = rd_wa;
+                    end
+                    if(counter == 8'h0a) begin
+                       tdata[random] = rd_wb;
+                    end
+                    if(counter == 8'h0b) begin
+                       tdata[random] = rd_wc;
+                    end
+                    if(counter == 8'h0c) begin
+                       tdata[random] = rd_wd;
+                    end
+
 
                 
                 if(counter == 8'h17) begin
