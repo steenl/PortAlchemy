@@ -349,6 +349,9 @@ mac_16x8_inst
             we_a_next      = 0;  //dead cycle before writes can occur
 	    	end //if
          else if ((s_axis_tdata_0[63:16]) ==  48'h0D6120746567) begin  //memcached "get a" from saxis0
+            addr_a_next    = s_axis_tdata_0[55:48]; //grab key as address, single byte for now
+            m_axis_tdata_reg_next = 64'h650054DDCB2B0100; //responding UDP port
+
             state_next = KV_GET; 
 	     	end //if		
      
@@ -358,7 +361,7 @@ mac_16x8_inst
                end  //progress regular packet
              end  //PKT_PROC state
 
-         KV_SET: begin  //KV_SET, get Key, hash on key for address, write value to address
+         KV_SET: begin  //KV_SET=5, get Key, hash on key for address, write value to address
             // defaults
             state_next     = KV_SET;
             addr_a_next    = addr_a;
@@ -389,9 +392,48 @@ mac_16x8_inst
             end
          end
             
-         KV_GET: begin  //KV_GET, read value from address, send back
-              state_next = PKT_PROC;
+
+
+          
+         KV_GET: begin  //KV_GET=6, read value from address, send back
+         // defaults
+            state_next     = KV_GET;
+            addr_a_next    = addr_a;
+            read_cnt_next = read_cnt;
+            if (read_cnt == 4'h0) begin
+               addr_a_next    = addr_a; //address from hash of key 
+               m_axis_tdata_reg_next = 64'h01000000341278FE;  //header info
+               read_cnt_next = read_cnt + 1;
             end
+            
+            else if (read_cnt == 1) begin
+               addr_a_next    = addr_a; //address from hash of key 
+               m_axis_tdata_reg_next = 64'h2045554C41560000;  //value string
+               read_cnt_next = read_cnt + 1;
+            end
+            
+            else if (read_cnt == 2) begin
+               addr_a_next    = addr_a; //address from hash of key 
+               m_axis_tdata_reg_next = 64'h0A0D343620302061;  //length of GET
+               read_cnt_next = read_cnt + 1;
+            end
+            
+            else if ((read_cnt > 2) && (read_cnt < 4'hB)) begin
+               // middle data words
+               addr_a_next    = addr_a + 1;
+               m_axis_tdata_reg_next = dout_a;
+               read_cnt_next = read_cnt + 1;
+            end
+            else begin
+               // final word
+               addr_a_next    = addr_a;
+               m_axis_tdata_reg_next = 64'h0A0D444E450A0D;  //final word of GET
+               read_cnt_next = 0;
+               state_next     = PKT_PROC;
+            end    
+
+           
+            end  //KV_GET state
 
          START_MAC: begin  //MAC process, for now assume one cycle
               state_next = PKT_PROC;
