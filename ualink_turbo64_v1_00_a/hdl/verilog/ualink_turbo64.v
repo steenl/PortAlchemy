@@ -526,9 +526,9 @@ mac_16x8_inst
 		  end
    end
 
-      always @(negedge axi_aclk) begin // make sure we start walking s_axis_tdata_0 early enough
+      always @(negedge axi_aclk) begin // update on the halfcycle for anything needed.
       if(~axi_resetn) begin
-         frame_h0d1_reg <= 0;
+       //  frame_h0d1_reg <= 0;
       end
       else begin
        //  frame_h0d1_reg <= s_axis_tdata_0;
