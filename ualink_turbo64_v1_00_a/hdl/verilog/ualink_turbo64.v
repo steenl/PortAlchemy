@@ -345,11 +345,11 @@ mac_16x8_inst
 	    	end //if
          else if ((s_axis_tdata_0[63:16]) ==  48'h206120746573) begin  //Fix for UDP decode of memcached SET "set a " from saxis0
             state_next = KV_SET; 
-            addr_a_next    = s_axis_tdata_0[55:48]; //grab key as address, single byte for now
+            addr_a_next    = s_axis_tdata_0[47:40]; //Jan7 fix //grab key as address, single byte for now
             we_a_next      = 0;  //dead cycle before writes can occur
 	    	end //if
          else if ((s_axis_tdata_0[63:16]) ==  48'h0D6120746567) begin  //memcached "get a" from saxis0
-            addr_a_next    = s_axis_tdata_0[55:48]; //grab key as address, single byte for now
+            addr_a_next    = s_axis_tdata_0[47:40]; //jan7 fix //grab key as address, single byte for now
             m_axis_tdata_reg_next = 64'h650054DDCB2B0100; //responding UDP port
 
             state_next = KV_GET; 
@@ -585,7 +585,7 @@ always @(posedge axi_aclk) begin
          CS_M_AXIS_TDATA15, CS_M_AXIS_TDATA14, CS_M_AXIS_TDATA13, CS_M_AXIS_TDATA12,
          CS_M_AXIS_TDATA11, CS_M_AXIS_TDATA10, CS_M_AXIS_TDATA9,  CS_M_AXIS_TDATA8,
          CS_M_AXIS_TDATA7,  CS_M_AXIS_TDATA6,  CS_M_AXIS_TDATA5,  CS_M_AXIS_TDATA4,
-         CS_M_AXIS_TDATA3,  CS_M_AXIS_TDATA2,  CS_M_AXIS_TDATA1,  CS_M_AXIS_TDATA0} <= m_axis_tdata;
+         CS_M_AXIS_TDATA3,  CS_M_AXIS_TDATA2,  CS_M_AXIS_TDATA1,  CS_M_AXIS_TDATA0} <= dout_a; // m_axis_tdata;
 
          {CS_S_AXIS_TDATA63, CS_S_AXIS_TDATA62, CS_S_AXIS_TDATA61, CS_S_AXIS_TDATA60,
          CS_S_AXIS_TDATA59, CS_S_AXIS_TDATA58, CS_S_AXIS_TDATA57, CS_S_AXIS_TDATA56,
@@ -602,7 +602,7 @@ always @(posedge axi_aclk) begin
          CS_S_AXIS_TDATA15, CS_S_AXIS_TDATA14, CS_S_AXIS_TDATA13, CS_S_AXIS_TDATA12,
          CS_S_AXIS_TDATA11, CS_S_AXIS_TDATA10, CS_S_AXIS_TDATA9,  CS_S_AXIS_TDATA8,
          CS_S_AXIS_TDATA7,  CS_S_AXIS_TDATA6,  CS_S_AXIS_TDATA5,  CS_S_AXIS_TDATA4,
-         CS_S_AXIS_TDATA3,  CS_S_AXIS_TDATA2,  CS_S_AXIS_TDATA1,  CS_S_AXIS_TDATA0} <= dout_a; // s_axis_tdata_0;
+         CS_S_AXIS_TDATA3,  CS_S_AXIS_TDATA2,  CS_S_AXIS_TDATA1,  CS_S_AXIS_TDATA0} <= s_axis_tdata_0;
 end
 always @(posedge led_clk) begin
     if (!axi_resetn) begin
