@@ -181,7 +181,6 @@ reg [C_M_AXIS_DATA_WIDTH - 1:0] dmark = "DEADBEEFdeadbeefdeadbeefDEADBEEF"; //du
    (
     .clk(axi_aclk),
     .rst_n(axi_resetn),
-    .fma_start(CIM_start)
     .we_a(we_a),
     .addr_a(addr_a),
     .din_a(din_a),
