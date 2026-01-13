@@ -341,7 +341,8 @@ module matrix_fma_8x8 #(
 
 endmodule
 
-// Testbench
+// Testbench perhaps split to separate file, but included here for completeness
+/* 
 module matrix_fma_8x8_tb;
     parameter WIDTH = 8;
     parameter ACCUMULATOR_WIDTH = 24;
@@ -506,3 +507,4 @@ module matrix_fma_8x8_tb;
     end
 
 endmodule
+*/

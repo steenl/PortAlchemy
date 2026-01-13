@@ -84,7 +84,7 @@ case $TESTBENCH in
         TB_DIR="$PROJECT_ROOT/ualink_turbo64_v1_00_a/hdl/verilog"
         TB_FILE="ualink_turbo64_tb.v"
         # Need the main module + all its dependencies (FIFOs and memory)
-        SOURCES="ualink_turbo64.v fallthrough_small_fifo_v2.v small_fifo_v3.v ualink_dpmem.v"
+        SOURCES="ualink_turbo64.v fallthrough_small_fifo_v2.v small_fifo_v3.v ualink_dpmem.v ualink_fma.v"
         ;;
 
     "ualink_turbordwr_tb")
@@ -92,7 +92,7 @@ case $TESTBENCH in
         TB_DIR="$PROJECT_ROOT/ualink_turbo64_v1_00_a/hdl/verilog"
         TB_FILE="ualink_turbordwr_tb.v"
         # Same dependencies as above (reuses the same hardware)
-        SOURCES="ualink_turbo64.v fallthrough_small_fifo_v2.v small_fifo_v3.v ualink_dpmem.v"
+        SOURCES="ualink_turbo64.v fallthrough_small_fifo_v2.v small_fifo_v3.v ualink_dpmem.v ualink_fma.v"
         ;;
 
     "ualink_mac_tb")
