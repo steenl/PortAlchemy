@@ -2,9 +2,13 @@
 // Fused Multiply-Add for 8x8 Matrix of 8-bit values with Memory Interface
 // Verilog-2001 compliant - uses flat packed arrays instead of unpacked arrays
 // Reads matrix B from memory, uses input matrix A, accumulates to C
-// Triggered by fma_start signal
+// Triggered by start_fma signal
 
-/*
+/* 
+For full SET/GET commands and testbench:
+
+
+for simple FMA only testing:
 iverilog -o ualink_fma.vvp ualink_fma.v
 vvp ualink_fma.vvp
 gtkwave.exe matrix_fma_8x8.vcd
@@ -18,27 +22,30 @@ module matrix_fma_8x8 #(
     input  wire                                 rst_n,
     
     // Control
-    input  wire                                 fma_start,
-    output reg                                  fma_done,
-    
-    // Matrix A input (64 elements, 8 bits each = 512 bits total)
-    // Layout: mat_a[511:504] = A[0][0], mat_a[503:496] = A[0][1], etc.
-    //Keep static identity for now.
-    input  wire signed [511:0]                  mat_a,
-    
+    input  wire                                 start_fma,
+    input wire [7:0]                            addr_base,
+    output reg                                  done_fma,
+
     // Matrix B memory interface (read-only)
     output reg  [7:0]                           addr_b,
     input  wire [63:0]                          dout_b,
     output  wire [63:0]                         din_b,
+    output  wire                                we_b
+
+);
+
+    // Matrix A input (64 elements, 8 bits each = 512 bits total)
+    // Layout: mat_a[511:504] = A[0][0], mat_a[503:496] = A[0][1], etc.
+    //Keep static identity for now.
+    reg signed [511:0]                  mat_a;
 
     // Matrix C accumulator input (64 elements, 24 bits each = 1536 bits)
     //keep zero for now
-    input  wire signed [1535:0]                 mat_c,
+    reg signed [1535:0]                 mat_c;
     
     // Matrix output (64 elements, 24 bits each = 1536 bits)
     //only writing out first 64B=512bits for now
-    output reg  signed [1535:0]                 mat_out
-);
+    reg  signed [1535:0]                 mat_out;
 
     // FSM states
     localparam IDLE         = 3'd0;
@@ -187,8 +194,8 @@ module matrix_fma_8x8 #(
         next_state = state;
         case (state)
             IDLE: begin
-                if (fma_start)  begin
-                    addr_b_base = addr_b
+                if (start_fma)  begin
+                    addr_b_base = addr_b;
                     next_state = LOAD_B;
                 end
             end
@@ -224,7 +231,7 @@ module matrix_fma_8x8 #(
         end else begin
             case (state)
                 IDLE: begin
-                    if (fma_start) begin
+                    if (start_fma) begin
                         addr_b <= addr_b_base;
                         load_counter <= 4'd0;
                     end
@@ -315,10 +322,10 @@ module matrix_fma_8x8 #(
     // Pipeline Stage 3: Add to accumulator and output
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            fma_done <= 1'b0;
+            done_fma <= 1'b0;
             mat_out <= 1536'd0;
         end else begin
-            fma_done <= (state == DONE);
+            done_fma <= (state == DONE);
             
             if (valid_accumulate) begin
                 for (i = 0; i < 8; i = i + 1) begin
@@ -339,8 +346,8 @@ module matrix_fma_8x8_tb;
     parameter WIDTH = 8;
     parameter ACCUMULATOR_WIDTH = 24;
     
-    reg clk, rst_n, fma_start;
-    wire fma_done;
+    reg clk, rst_n, start_fma;
+    wire done_fma;
     
     reg signed [511:0] mat_a;
     wire [7:0] addr_b;
@@ -363,14 +370,13 @@ module matrix_fma_8x8_tb;
     ) dut (
         .clk(clk),
         .rst_n(rst_n),
-        .fma_start(fma_start),
-        .fma_done(fma_done),
-        .mat_a(mat_a),
+        .start_fma(start_fma),
+        .done_fma(done_fma),
         .addr_b(addr_b),
         .dout_b(dout_b),
-        .mat_c(mat_c),
-        .mat_out(mat_out)
-    );
+ //       .din_b(din_b),
+        .we_b(we_b)
+        );
     
     // Clock generation
     initial begin
@@ -419,7 +425,7 @@ module matrix_fma_8x8_tb;
         
         // Initialize
         rst_n = 0;
-        fma_start = 0;
+        start_fma = 0;
         mat_a = 512'd0;
         mat_c = 1536'd0;
         
@@ -451,11 +457,11 @@ module matrix_fma_8x8_tb;
         end
         
         // Start operation
-        fma_start = 1;
-        #10 fma_start = 0;
+        start_fma = 1;
+        #10 start_fma = 0;
         
         // Wait for completion
-        wait(fma_done);
+        wait(done_fma);
         #10;
         
         $display("Result[0][0] = %d (expected 5)", get_mat_out(3'd0, 3'd0));
@@ -477,10 +483,10 @@ module matrix_fma_8x8_tb;
             memory[i] = 64'h0303030303030303;
         end
         
-        fma_start = 1;
-        #10 fma_start = 0;
+        start_fma = 1;
+        #10 start_fma = 0;
         
-        wait(fma_done);
+        wait(done_fma);
         #10;
         
         // Expected: sum of (2*3) for 8 elements = 48, plus accumulator 10 = 58

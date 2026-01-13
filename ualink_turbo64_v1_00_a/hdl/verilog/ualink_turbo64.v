@@ -142,7 +142,8 @@ module ualink_turbo64
    reg [NUM_QUEUES_WIDTH-1:0]          cur_queue_next;
 
    reg [NUM_STATES-1:0]                state, state_next;
-   reg CIM_start, CIM_start_next;
+   reg start_mac, start_mac_next;
+   reg start_fma, start_fma_next;
    reg [3:0] write_cnt = 4'h0, write_cnt_next = 4'h0; // needs to count to 9 (0–8)
    reg [3:0] read_cnt = 4'h0, read_cnt_next = 4'h0;   // needs to count to 11 (0–10)
    reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg      = "01234567"; //register to hold read response data
@@ -161,7 +162,7 @@ reg [C_M_AXIS_DATA_WIDTH - 1:0] dmark = "DEADBEEFdeadbeefdeadbeefDEADBEEF"; //du
   reg     led_reg, led_clk;
   
   	reg we_a, we_a_next;
-	reg [DPADDR_WIDTH-1:0]               addr_a_next = 64'h00, addr_a = 64'h00;
+	reg [DPADDR_WIDTH-1:0]               addr_a_next = 64'h00, addr_a = 64'h00, addr_base;
 	reg [DPDATA_WIDTH-1:0]               din_a;
 	wire [DPDATA_WIDTH-1:0]               dout_a;
 	reg we_b;
@@ -169,9 +170,9 @@ reg [C_M_AXIS_DATA_WIDTH - 1:0] dmark = "DEADBEEFdeadbeefdeadbeefDEADBEEF"; //du
 	reg [DPDATA_WIDTH-1:0]               din_b;
 	wire [DPDATA_WIDTH-1:0]               dout_b;
 
-   // ------------ Modules -------------
+   // ------------ Module instantiations -------------
 
-   dual_port_ram_8x64
+   dual_port_ram_8x64    //for now a simple 8b addressable 64b wide dual port RAM
    #(
     .DPADDR_WIDTH(DPADDR_WIDTH),
     .DPDATA_WIDTH(DPDATA_WIDTH),
@@ -179,17 +180,21 @@ reg [C_M_AXIS_DATA_WIDTH - 1:0] dmark = "DEADBEEFdeadbeefdeadbeefDEADBEEF"; //du
    )
    dpmem_inst
    (
-    .clk(axi_aclk),
-    .rst_n(axi_resetn),
+    .axi_aclk(axi_aclk),
+    .axi_resetn(axi_resetn),
     .we_a(we_a),
     .addr_a(addr_a),
     .din_a(din_a),
     .dout_a(dout_a),
-    .we_b(we_b),
+    .we_b(we_b),  //this port accessed only by FMA/MAC engines
     .addr_b(addr_b),
     .din_b(din_b),
     .dout_b(dout_b)
    );
+
+//With the idea there could be mutliple CIM engines at play, we need to use the context to trigger one of mulple engines
+//That requires a separate signal name for each engine.  
+//At this time scapy can trigger mac_start and SET trigger fma_start
 
 /*
  ualink_mac // instantiation
@@ -201,30 +206,27 @@ mac_16x8_inst
 (
    .clk(axi_aclk),
    .rst(~axi_resetn),
-   .start_mac(CIM_start),
+   .start_mac(start_mac),
    .addr_b(addr_b),
    .dout_b(dout_b),  //dout from memory
    .din_b(din_b),
    .we_b(we_b),
-   .status_done(fsm_done)  
+   .done_mac(done_mac)  
 );
 */
 
 matrix_fma_8x8   // instantiation
 #(
-   .DATA_WIDTH(DATA_WIDTH),
-   .ARRAY_SIZE(ARRAY_SIZE)
+//   .DPDATA_WIDTH(DPDATA_WIDTH),
+//   .DPARRAY_SIZE(DPADDR_WIDTH)
 )
 matrix_fma_8x8_inst
 (
    .clk(axi_aclk),
-   .rst(~axi_resetn),
-   .fma_start(CIM_start),
-   .addr_b(addr_b),
-   .dout_b(dout_b), //dout from memory
-   .din_b(din_b),
-   .we_b(we_b),
-   .fma_done(CIM_done)  
+   .rst_n(~axi_resetn),
+   .start_fma(start_fma),
+   .addr_base(addr_base),
+      .done_fma(done_fma)  
 );
 
    generate
@@ -359,11 +361,11 @@ matrix_fma_8x8_inst
 	    	end //if
 		  else if ((frame_h0d4_reg[63:48]) ==  16'h0345) begin  //Kickstart MAC
             state_next = START_MAC; 
-  		      CIM_start_next = 1;
+  		      start_mac_next = 1;
 	    	end //if
          else if ((s_axis_tdata_0[63:16]) ==  48'h206120746573) begin  //Fix for UDP decode of memcached SET "set a " from saxis0
             state_next = KV_SET; 
-            addr_a_next    = s_axis_tdata_0[47:40]; //Jan7 fix //grab key as address, single byte for now
+            addr_base    = s_axis_tdata_0[47:40]; //Jan7 fix //grab key as address, single byte for now
             we_a_next      = 0;  //dead cycle before writes can occur
 	    	end //if
          else if ((s_axis_tdata_0[63:16]) ==  48'h0D6120746567) begin  //memcached "get a" from saxis0
@@ -383,6 +385,7 @@ matrix_fma_8x8_inst
             // defaults
             state_next     = KV_SET;
             addr_a_next    = addr_a;
+            addr_base    = addr_a;
             we_a_next      = 0;
             din_a          = s_axis_tdata_0;
             write_cnt_next = write_cnt;
@@ -406,6 +409,7 @@ matrix_fma_8x8_inst
                din_a          = s_axis_tdata_0;
                we_a_next      = 0;
                write_cnt_next = 0;
+               start_fma_next = 1;
                state_next     = PKT_PROC;
             end
          end
@@ -455,8 +459,7 @@ matrix_fma_8x8_inst
 
          START_MAC: begin  //MAC process, for now assume one cycle
               state_next = PKT_PROC;
-              addr_a_next    = s_axis_tdata_0[63:56];
-              CIM_start_next = 0;
+              start_mac_next = 0;
 			end
 
          WRITE_OP: begin
@@ -534,7 +537,8 @@ matrix_fma_8x8_inst
          we_a <= we_a_next;
          addr_a <= addr_a_next;
 	 m_axis_tdata_reg <= m_axis_tdata_reg_next;
-         CIM_start <= CIM_start_next;
+         start_mac <= start_mac_next;
+         start_fma <= start_fma_next;
          frame_h0d1_reg <= s_axis_tdata_0;
          frame_h0d2_reg <= frame_h0d1_reg;
          frame_h0d3_reg <= frame_h0d2_reg;

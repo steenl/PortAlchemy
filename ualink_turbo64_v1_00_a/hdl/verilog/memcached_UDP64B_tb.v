@@ -40,7 +40,7 @@ response:
 0080   0d 0a 45 4e 44 0d 0a                              ..END..
 
  to run in Icarus simulator use:
-iverilog -o memcached_UDP64B_tb.vvp .\memcached_UDP64B_tb.v ualink_turbo64.v .\fallthrough_small_fifo_v2.v .\small_fifo_v3.v .\ualink_dpmem.v
+iverilog -o memcached_UDP64B_tb.vvp .\memcached_UDP64B_tb.v ualink_turbo64.v .\fallthrough_small_fifo_v2.v .\small_fifo_v3.v .\ualink_dpmem.v .\ualink_fma.v
 vvp memcached_UDP64B_tb.vvp
 gtkwave.exe .\memcached_UDP64B_tb.vcd
 
