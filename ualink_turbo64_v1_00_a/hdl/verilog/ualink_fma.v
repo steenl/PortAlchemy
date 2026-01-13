@@ -1,8 +1,15 @@
+// AI / Steen 2025
 // Fused Multiply-Add for 8x8 Matrix of 8-bit values with Memory Interface
 // Verilog-2001 compliant - uses flat packed arrays instead of unpacked arrays
 // Reads matrix B from memory, uses input matrix A, accumulates to C
 // Triggered by fma_start signal
 
+/*
+iverilog -o ualink_fma.vvp ualink_fma.v
+vvp ualink_fma.vvp
+gtkwave.exe matrix_fma_8x8.vcd
+
+*/
 module matrix_fma_8x8 #(
     parameter WIDTH = 8,
     parameter ACCUMULATOR_WIDTH = 24
@@ -16,16 +23,20 @@ module matrix_fma_8x8 #(
     
     // Matrix A input (64 elements, 8 bits each = 512 bits total)
     // Layout: mat_a[511:504] = A[0][0], mat_a[503:496] = A[0][1], etc.
+    //Keep static identity for now.
     input  wire signed [511:0]                  mat_a,
     
     // Matrix B memory interface (read-only)
-    output reg  [7:0]                           dpmem_addr_b,
-    input  wire [63:0]                          dpmem_b,
-    
+    output reg  [7:0]                           addr_b,
+    input  wire [63:0]                          dout_b,
+    output  wire [63:0]                         din_b,
+
     // Matrix C accumulator input (64 elements, 24 bits each = 1536 bits)
+    //keep zero for now
     input  wire signed [1535:0]                 mat_c,
     
     // Matrix output (64 elements, 24 bits each = 1536 bits)
+    //only writing out first 64B=512bits for now
     output reg  signed [1535:0]                 mat_out
 );
 
@@ -38,7 +49,8 @@ module matrix_fma_8x8 #(
     
     reg [2:0] state, next_state;
     reg [3:0] load_counter;     // Count 0-7 for loading 8 rows
-    
+    reg [7:0] addr_b_base;
+
     // Matrix B storage (64 elements × 8 bits = 512 bits)
     reg signed [511:0] mat_b;
     
@@ -175,8 +187,10 @@ module matrix_fma_8x8 #(
         next_state = state;
         case (state)
             IDLE: begin
-                if (fma_start)
+                if (fma_start)  begin
+                    addr_b_base = addr_b
                     next_state = LOAD_B;
+                end
             end
             
             LOAD_B: begin
@@ -189,10 +203,11 @@ module matrix_fma_8x8 #(
             end
             
             ACCUMULATE: begin
-                next_state = DONE;
+                    next_state = DONE;
             end
             
-            DONE: begin
+            DONE: begin 
+             if (load_counter == 7) 
                 next_state = IDLE;
             end
             
@@ -203,28 +218,45 @@ module matrix_fma_8x8 #(
     // Memory address generation and matrix B loading
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            dpmem_addr_b <= 8'd0;
+            addr_b <= 8'd0;
             load_counter <= 4'd0;
             mat_b <= 512'd0;
         end else begin
             case (state)
                 IDLE: begin
                     if (fma_start) begin
-                        dpmem_addr_b <= 8'd0;
+                        addr_b <= addr_b_base;
                         load_counter <= 4'd0;
                     end
+                end
+                
+                MULTIPLY: begin
+                        addr_b <= addr_b_base;
+                        load_counter <= 4'd0;
                 end
                 
                 LOAD_B: begin
                     // Load one row per cycle (8 elements from 64-bit memory)
                     for (j = 0; j < 8; j = j + 1) begin
-                        set_mat_b(load_counter[2:0], j[2:0], dpmem_b[j*8 +: 8]);
+                        set_mat_b(load_counter[2:0], j[2:0], dout_b[j*8 +: 8]);
                     end
                     
                     if (load_counter < 7) begin
                         load_counter <= load_counter + 1;
-                        dpmem_addr_b <= dpmem_addr_b + 1;
+                        addr_b <= addr_b + 1;
                     end
+                end
+
+                DONE: begin
+
+                    if (load_counter < 7) begin
+                        load_counter <= load_counter + 1;
+                        addr_b <= addr_b + 1;
+                    end
+                end
+                
+                DONE: begin
+                    load_counter <= 4'd0;
                 end
             endcase
         end
@@ -311,8 +343,8 @@ module matrix_fma_8x8_tb;
     wire fma_done;
     
     reg signed [511:0] mat_a;
-    wire [7:0] dpmem_addr_b;
-    reg [63:0] dpmem_b;
+    wire [7:0] addr_b;
+    reg [63:0] dout_b;
     reg signed [1535:0] mat_c;
     wire signed [1535:0] mat_out;
     
@@ -321,7 +353,7 @@ module matrix_fma_8x8_tb;
     
     // Memory read logic
     always @(*) begin
-        dpmem_b = memory[dpmem_addr_b];
+        dout_b = memory[addr_b];
     end
     
     // Instantiate DUT
@@ -334,8 +366,8 @@ module matrix_fma_8x8_tb;
         .fma_start(fma_start),
         .fma_done(fma_done),
         .mat_a(mat_a),
-        .dpmem_addr_b(dpmem_addr_b),
-        .dpmem_b(dpmem_b),
+        .addr_b(addr_b),
+        .dout_b(dout_b),
         .mat_c(mat_c),
         .mat_out(mat_out)
     );

@@ -142,7 +142,7 @@ module ualink_turbo64
    reg [NUM_QUEUES_WIDTH-1:0]          cur_queue_next;
 
    reg [NUM_STATES-1:0]                state, state_next;
-   reg MAC_start, MAC_start_next;
+   reg CIM_start, CIM_start_next;
    reg [3:0] write_cnt = 4'h0, write_cnt_next = 4'h0; // needs to count to 9 (0–8)
    reg [3:0] read_cnt = 4'h0, read_cnt_next = 4'h0;   // needs to count to 11 (0–10)
    reg [C_M_AXIS_DATA_WIDTH - 1:0] m_axis_tdata_reg      = "01234567"; //register to hold read response data
@@ -179,8 +179,9 @@ reg [C_M_AXIS_DATA_WIDTH - 1:0] dmark = "DEADBEEFdeadbeefdeadbeefDEADBEEF"; //du
    )
    dpmem_inst
    (
-    .axi_aclk(axi_aclk),
-    .axi_resetn(axi_resetn),
+    .clk(axi_aclk),
+    .rst_n(axi_resetn),
+    .fma_start(CIM_start)
     .we_a(we_a),
     .addr_a(addr_a),
     .din_a(din_a),
@@ -191,7 +192,8 @@ reg [C_M_AXIS_DATA_WIDTH - 1:0] dmark = "DEADBEEFdeadbeefdeadbeefDEADBEEF"; //du
     .dout_b(dout_b)
    );
 
-/* mac_unit
+/*
+ ualink_mac // instantiation
 #(
    .DATA_WIDTH(DATA_WIDTH),
    .ARRAY_SIZE(ARRAY_SIZE)
@@ -200,15 +202,32 @@ mac_16x8_inst
 (
    .clk(axi_aclk),
    .rst(~axi_resetn),
-   .start_mac(MAC_start),
-   .addrb(addr_b),
-   .enb(1),
-   .doutb_a(),  //unused
-   .doutb_b(), //unused
-   .mac_result(), //unused since written to mem
-   .status_done()  //unused
-);      
+   .start_mac(CIM_start),
+   .addr_b(addr_b),
+   .dout_b(dout_b),  //dout from memory
+   .din_b(din_b),
+   .we_b(we_b),
+   .status_done(fsm_done)  
+);
 */
+
+matrix_fma_8x8   // instantiation
+#(
+   .DATA_WIDTH(DATA_WIDTH),
+   .ARRAY_SIZE(ARRAY_SIZE)
+)
+matrix_fma_8x8_inst
+(
+   .clk(axi_aclk),
+   .rst(~axi_resetn),
+   .fma_start(CIM_start),
+   .addr_b(addr_b),
+   .dout_b(dout_b), //dout from memory
+   .din_b(din_b),
+   .we_b(we_b),
+   .fma_done(CIM_done)  
+);
+
    generate
    genvar i;
    for(i=0; i<NUM_QUEUES; i=i+1) begin: in_arb_queues
@@ -341,7 +360,7 @@ mac_16x8_inst
 	    	end //if
 		  else if ((frame_h0d4_reg[63:48]) ==  16'h0345) begin  //Kickstart MAC
             state_next = START_MAC; 
-  		      MAC_start_next = 1;
+  		      CIM_start_next = 1;
 	    	end //if
          else if ((s_axis_tdata_0[63:16]) ==  48'h206120746573) begin  //Fix for UDP decode of memcached SET "set a " from saxis0
             state_next = KV_SET; 
@@ -437,7 +456,8 @@ mac_16x8_inst
 
          START_MAC: begin  //MAC process, for now assume one cycle
               state_next = PKT_PROC;
-              MAC_start_next = 0;
+              addr_a_next    = s_axis_tdata_0[63:56];
+              CIM_start_next = 0;
 			end
 
          WRITE_OP: begin
@@ -515,7 +535,7 @@ mac_16x8_inst
          we_a <= we_a_next;
          addr_a <= addr_a_next;
 	 m_axis_tdata_reg <= m_axis_tdata_reg_next;
-         MAC_start <= MAC_start_next;
+         CIM_start <= CIM_start_next;
          frame_h0d1_reg <= s_axis_tdata_0;
          frame_h0d2_reg <= frame_h0d1_reg;
          frame_h0d3_reg <= frame_h0d2_reg;
