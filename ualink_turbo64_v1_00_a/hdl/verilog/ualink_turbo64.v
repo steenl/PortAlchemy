@@ -207,10 +207,7 @@ mac_16x8_inst
    .clk(axi_aclk),
    .rst(~axi_resetn),
    .start_mac(start_mac),
-   .addr_b(addr_b),
-   .dout_b(dout_b),  //dout from memory
-   .din_b(din_b),
-   .we_b(we_b),
+   .addr_base(addr_base),
    .done_mac(done_mac)  
 );
 */
