@@ -28,8 +28,8 @@ module matrix_fma_8x8 #(
 
     // Matrix B memory interface (read-only)
     output reg  [7:0]                           addr_b,
-    input  wire [63:0]                          dout_b,
-    output  wire [63:0]                         din_b,
+    input  wire [63:0]                          dout_b,  // out from memory
+ //   output  reg [63:0]                         din_b,
     output  wire                                we_b
 
 );
@@ -37,16 +37,16 @@ module matrix_fma_8x8 #(
     // Matrix A input (64 elements, 8 bits each = 512 bits total)
     // Layout: mat_a[511:504] = A[0][0], mat_a[503:496] = A[0][1], etc.
     //Keep static identity for now.
-    reg signed [511:0]                  mat_a;
+    reg signed [511:0]                  mat_a = 512'h0123456789ABCDEF00000000000000000;
 
     // Matrix C accumulator input (64 elements, 24 bits each = 1536 bits)
     //keep zero for now
-    reg signed [1535:0]                 mat_c;
+    reg signed [1535:0]                 mat_c = 1536'h00000000000000000000000000000000000000000000;
     
     // Matrix output (64 elements, 24 bits each = 1536 bits)
     //only writing out first 64B=512bits for now
     reg  signed [1535:0]                 mat_out;
-
+    reg [63:0] din_b = 64'h0000000000000000; 
     // FSM states
     localparam IDLE         = 3'd0;
     localparam LOAD_B       = 3'd1;
@@ -56,7 +56,7 @@ module matrix_fma_8x8 #(
     
     reg [2:0] state, next_state;
     reg [3:0] load_counter;     // Count 0-7 for loading 8 rows
-    reg [7:0] addr_b_base;
+    reg [7:0] addr_b_base = 8'h20;
 
     // Matrix B storage (64 elements × 8 bits = 512 bits)
     reg signed [511:0] mat_b;
@@ -106,6 +106,18 @@ module matrix_fma_8x8 #(
         begin
             offset = (row * 8 + col) * WIDTH;
             mat_b[offset +: WIDTH] = value;
+        end
+    endtask
+
+    // Helper function to output matrix out element mat_out[row][col]
+    task set_mat_outmem;
+        input [2:0] row;
+        input [2:0] col;
+        input signed [WIDTH-1:0] value;
+        integer offset;
+        begin
+            offset = (row * 8 + col) * WIDTH;
+            din_b = mat_out[offset +: WIDTH];
         end
     endtask
     
@@ -195,7 +207,6 @@ module matrix_fma_8x8 #(
         case (state)
             IDLE: begin
                 if (start_fma)  begin
-                    addr_b_base = addr_b;
                     next_state = LOAD_B;
                 end
             end
@@ -232,13 +243,13 @@ module matrix_fma_8x8 #(
             case (state)
                 IDLE: begin
                     if (start_fma) begin
+                        addr_b_base <= addr_base;
                         addr_b <= addr_b_base;
                         load_counter <= 4'd0;
                     end
                 end
                 
                 MULTIPLY: begin
-                        addr_b <= addr_b_base;
                         load_counter <= 4'd0;
                 end
                 
@@ -259,6 +270,10 @@ module matrix_fma_8x8 #(
                     if (load_counter < 7) begin
                         load_counter <= load_counter + 1;
                         addr_b <= addr_b + 1;
+                    end
+                   //Write one row per cycle (8 elements from 64-bit memory)
+                    for (j = 0; j < 8; j = j + 1) begin
+                        set_mat_outmem(load_counter[2:0], j[2:0], din_b[j*8 +: 8]);
                     end
                 end
                 
@@ -342,7 +357,7 @@ module matrix_fma_8x8 #(
 endmodule
 
 // Testbench perhaps split to separate file, but included here for completeness
-/* 
+// two fma ops, 1=identity, 2=2x3+10
 module matrix_fma_8x8_tb;
     parameter WIDTH = 8;
     parameter ACCUMULATOR_WIDTH = 24;
@@ -351,8 +366,9 @@ module matrix_fma_8x8_tb;
     wire done_fma;
     
     reg signed [511:0] mat_a;
-    wire [7:0] addr_b;
+    reg [7:0] addr_base;
     reg [63:0] dout_b;
+   // reg [63:0] din_b;
     reg signed [1535:0] mat_c;
     wire signed [1535:0] mat_out;
     
@@ -361,7 +377,7 @@ module matrix_fma_8x8_tb;
     
     // Memory read logic
     always @(*) begin
-        dout_b = memory[addr_b];
+        dout_b = memory[addr_base];
     end
     
     // Instantiate DUT
@@ -373,9 +389,9 @@ module matrix_fma_8x8_tb;
         .rst_n(rst_n),
         .start_fma(start_fma),
         .done_fma(done_fma),
-        .addr_b(addr_b),
+        .addr_base(addr_base),
         .dout_b(dout_b),
- //       .din_b(din_b),
+     //   .din_b(din_b),
         .we_b(we_b)
         );
     
@@ -427,12 +443,13 @@ module matrix_fma_8x8_tb;
         // Initialize
         rst_n = 0;
         start_fma = 0;
+        addr_base = 8'h20;
         mat_a = 512'd0;
         mat_c = 1536'd0;
         
         // Initialize memory with zeros
         for (i = 0; i < 256; i = i + 1) begin
-            memory[i] = 64'd0;
+            memory[i] = 64'h0123456789ABCDEF;
         end
         
         #20 rst_n = 1;
@@ -470,7 +487,7 @@ module matrix_fma_8x8_tb;
         $display("Result[0][1] = %d (expected 0)", get_mat_out(3'd0, 3'd1));
         
         // Test 2: 2x2 multiplication with accumulator
-        #50;
+        #250;
         $display("\nTest 2: A=2s, B=3s, C=10");
         
         for (i = 0; i < 8; i = i + 1) begin
@@ -507,4 +524,3 @@ module matrix_fma_8x8_tb;
     end
 
 endmodule
-*/
