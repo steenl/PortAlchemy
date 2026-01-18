@@ -30,7 +30,7 @@ module matrix_fma_8x8 #(
     output reg  [7:0]                           addr_b,
     input  wire [63:0]                          dout_b,  // out from memory
  //   output  reg [63:0]                         din_b,
-    output  wire                                we_b
+    output  reg                                 we_b
 
 );
 
@@ -239,9 +239,11 @@ module matrix_fma_8x8 #(
             addr_b <= 8'd0;
             load_counter <= 4'd0;
             mat_b <= 512'd0;
+            we_b <= 1'b0;
         end else begin
             case (state)
                 IDLE: begin
+                    we_b <= 1'b0;
                     if (start_fma) begin
                         addr_b_base <= addr_base;
                         addr_b <= addr_b_base;
@@ -250,10 +252,12 @@ module matrix_fma_8x8 #(
                 end
                 
                 MULTIPLY: begin
+                    we_b <= 1'b0;
                         load_counter <= 4'd0;
                 end
                 
                 LOAD_B: begin
+                    we_b <= 1'b0;
                     // Load one row per cycle (8 elements from 64-bit memory)
                     for (j = 0; j < 8; j = j + 1) begin
                         set_mat_b(load_counter[2:0], j[2:0], dout_b[j*8 +: 8]);
@@ -265,7 +269,12 @@ module matrix_fma_8x8 #(
                     end
                 end
 
+                ACCUMULATE: begin
+                    we_b <= 1'b0;
+                end
+
                 DONE: begin
+                    we_b <= 1'b1;
 
                     if (load_counter < 7) begin
                         load_counter <= load_counter + 1;
@@ -277,8 +286,8 @@ module matrix_fma_8x8 #(
                     end
                 end
                 
-                DONE: begin
-                    load_counter <= 4'd0;
+                default: begin
+                    we_b <= 1'b0;
                 end
             endcase
         end

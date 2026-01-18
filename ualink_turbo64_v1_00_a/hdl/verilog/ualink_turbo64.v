@@ -316,6 +316,8 @@ matrix_fma_8x8_inst
       cur_queue_next  = cur_queue;
       rd_en           = 0;
       we_a_next       = we_a;  
+      start_fma_next = 0;
+
 
       case(state)
 
