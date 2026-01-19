@@ -259,9 +259,88 @@ module matrix_fma_8x8 #(
                 LOAD_B: begin
                     we_b <= 1'b0;
                     // Load one row per cycle (8 elements from 64-bit memory)
-                    for (j = 0; j < 8; j = j + 1) begin
-                        set_mat_b(load_counter[2:0], j[2:0], dout_b[j*8 +: 8]);
-                    end
+                    case (load_counter)
+                        4'd0: begin
+                            mat_b[0*64 + 0*8 +: 8] <= dout_b[7:0];
+                            mat_b[0*64 + 1*8 +: 8] <= dout_b[15:8];
+                            mat_b[0*64 + 2*8 +: 8] <= dout_b[23:16];
+                            mat_b[0*64 + 3*8 +: 8] <= dout_b[31:24];
+                            mat_b[0*64 + 4*8 +: 8] <= dout_b[39:32];
+                            mat_b[0*64 + 5*8 +: 8] <= dout_b[47:40];
+                            mat_b[0*64 + 6*8 +: 8] <= dout_b[55:48];
+                            mat_b[0*64 + 7*8 +: 8] <= dout_b[63:56];
+                        end
+                        4'd1: begin
+                            mat_b[1*64 + 0*8 +: 8] <= dout_b[7:0];
+                            mat_b[1*64 + 1*8 +: 8] <= dout_b[15:8];
+                            mat_b[1*64 + 2*8 +: 8] <= dout_b[23:16];
+                            mat_b[1*64 + 3*8 +: 8] <= dout_b[31:24];
+                            mat_b[1*64 + 4*8 +: 8] <= dout_b[39:32];
+                            mat_b[1*64 + 5*8 +: 8] <= dout_b[47:40];
+                            mat_b[1*64 + 6*8 +: 8] <= dout_b[55:48];
+                            mat_b[1*64 + 7*8 +: 8] <= dout_b[63:56];
+                        end
+                        4'd2: begin
+                            mat_b[2*64 + 0*8 +: 8] <= dout_b[7:0];
+                            mat_b[2*64 + 1*8 +: 8] <= dout_b[15:8];
+                            mat_b[2*64 + 2*8 +: 8] <= dout_b[23:16];
+                            mat_b[2*64 + 3*8 +: 8] <= dout_b[31:24];
+                            mat_b[2*64 + 4*8 +: 8] <= dout_b[39:32];
+                            mat_b[2*64 + 5*8 +: 8] <= dout_b[47:40];
+                            mat_b[2*64 + 6*8 +: 8] <= dout_b[55:48];
+                            mat_b[2*64 + 7*8 +: 8] <= dout_b[63:56];
+                        end
+                        4'd3: begin
+                            mat_b[3*64 + 0*8 +: 8] <= dout_b[7:0];
+                            mat_b[3*64 + 1*8 +: 8] <= dout_b[15:8];
+                            mat_b[3*64 + 2*8 +: 8] <= dout_b[23:16];
+                            mat_b[3*64 + 3*8 +: 8] <= dout_b[31:24];
+                            mat_b[3*64 + 4*8 +: 8] <= dout_b[39:32];
+                            mat_b[3*64 + 5*8 +: 8] <= dout_b[47:40];
+                            mat_b[3*64 + 6*8 +: 8] <= dout_b[55:48];
+                            mat_b[3*64 + 7*8 +: 8] <= dout_b[63:56];
+                        end
+                        4'd4: begin
+                            mat_b[4*64 + 0*8 +: 8] <= dout_b[7:0];
+                            mat_b[4*64 + 1*8 +: 8] <= dout_b[15:8];
+                            mat_b[4*64 + 2*8 +: 8] <= dout_b[23:16];
+                            mat_b[4*64 + 3*8 +: 8] <= dout_b[31:24];
+                            mat_b[4*64 + 4*8 +: 8] <= dout_b[39:32];
+                            mat_b[4*64 + 5*8 +: 8] <= dout_b[47:40];
+                            mat_b[4*64 + 6*8 +: 8] <= dout_b[55:48];
+                            mat_b[4*64 + 7*8 +: 8] <= dout_b[63:56];
+                        end
+                        4'd5: begin
+                            mat_b[5*64 + 0*8 +: 8] <= dout_b[7:0];
+                            mat_b[5*64 + 1*8 +: 8] <= dout_b[15:8];
+                            mat_b[5*64 + 2*8 +: 8] <= dout_b[23:16];
+                            mat_b[5*64 + 3*8 +: 8] <= dout_b[31:24];
+                            mat_b[5*64 + 4*8 +: 8] <= dout_b[39:32];
+                            mat_b[5*64 + 5*8 +: 8] <= dout_b[47:40];
+                            mat_b[5*64 + 6*8 +: 8] <= dout_b[55:48];
+                            mat_b[5*64 + 7*8 +: 8] <= dout_b[63:56];
+                        end
+                        4'd6: begin
+                            mat_b[6*64 + 0*8 +: 8] <= dout_b[7:0];
+                            mat_b[6*64 + 1*8 +: 8] <= dout_b[15:8];
+                            mat_b[6*64 + 2*8 +: 8] <= dout_b[23:16];
+                            mat_b[6*64 + 3*8 +: 8] <= dout_b[31:24];
+                            mat_b[6*64 + 4*8 +: 8] <= dout_b[39:32];
+                            mat_b[6*64 + 5*8 +: 8] <= dout_b[47:40];
+                            mat_b[6*64 + 6*8 +: 8] <= dout_b[55:48];
+                            mat_b[6*64 + 7*8 +: 8] <= dout_b[63:56];
+                        end
+                        4'd7: begin
+                            mat_b[7*64 + 0*8 +: 8] <= dout_b[7:0];
+                            mat_b[7*64 + 1*8 +: 8] <= dout_b[15:8];
+                            mat_b[7*64 + 2*8 +: 8] <= dout_b[23:16];
+                            mat_b[7*64 + 3*8 +: 8] <= dout_b[31:24];
+                            mat_b[7*64 + 4*8 +: 8] <= dout_b[39:32];
+                            mat_b[7*64 + 5*8 +: 8] <= dout_b[47:40];
+                            mat_b[7*64 + 6*8 +: 8] <= dout_b[55:48];
+                            mat_b[7*64 + 7*8 +: 8] <= dout_b[63:56];
+                        end
+                    endcase
                     
                     if (load_counter < 7) begin
                         load_counter <= load_counter + 1;
@@ -276,13 +355,92 @@ module matrix_fma_8x8 #(
                 DONE: begin
                     we_b <= 1'b1;
 
+                    case (load_counter)
+                        4'd0: begin
+                            din_b[7:0]   = mat_out[(0*8 + 0)*24 +: 8];
+                            din_b[15:8]  = mat_out[(0*8 + 1)*24 +: 8];
+                            din_b[23:16] = mat_out[(0*8 + 2)*24 +: 8];
+                            din_b[31:24] = mat_out[(0*8 + 3)*24 +: 8];
+                            din_b[39:32] = mat_out[(0*8 + 4)*24 +: 8];
+                            din_b[47:40] = mat_out[(0*8 + 5)*24 +: 8];
+                            din_b[55:48] = mat_out[(0*8 + 6)*24 +: 8];
+                            din_b[63:56] = mat_out[(0*8 + 7)*24 +: 8];
+                        end
+                        4'd1: begin
+                            din_b[7:0]   = mat_out[(1*8 + 0)*24 +: 8];
+                            din_b[15:8]  = mat_out[(1*8 + 1)*24 +: 8];
+                            din_b[23:16] = mat_out[(1*8 + 2)*24 +: 8];
+                            din_b[31:24] = mat_out[(1*8 + 3)*24 +: 8];
+                            din_b[39:32] = mat_out[(1*8 + 4)*24 +: 8];
+                            din_b[47:40] = mat_out[(1*8 + 5)*24 +: 8];
+                            din_b[55:48] = mat_out[(1*8 + 6)*24 +: 8];
+                            din_b[63:56] = mat_out[(1*8 + 7)*24 +: 8];
+                        end
+                        4'd2: begin
+                            din_b[7:0]   = mat_out[(2*8 + 0)*24 +: 8];
+                            din_b[15:8]  = mat_out[(2*8 + 1)*24 +: 8];
+                            din_b[23:16] = mat_out[(2*8 + 2)*24 +: 8];
+                            din_b[31:24] = mat_out[(2*8 + 3)*24 +: 8];
+                            din_b[39:32] = mat_out[(2*8 + 4)*24 +: 8];
+                            din_b[47:40] = mat_out[(2*8 + 5)*24 +: 8];
+                            din_b[55:48] = mat_out[(2*8 + 6)*24 +: 8];
+                            din_b[63:56] = mat_out[(2*8 + 7)*24 +: 8];
+                        end
+                        4'd3: begin
+                            din_b[7:0]   = mat_out[(3*8 + 0)*24 +: 8];
+                            din_b[15:8]  = mat_out[(3*8 + 1)*24 +: 8];
+                            din_b[23:16] = mat_out[(3*8 + 2)*24 +: 8];
+                            din_b[31:24] = mat_out[(3*8 + 3)*24 +: 8];
+                            din_b[39:32] = mat_out[(3*8 + 4)*24 +: 8];
+                            din_b[47:40] = mat_out[(3*8 + 5)*24 +: 8];
+                            din_b[55:48] = mat_out[(3*8 + 6)*24 +: 8];
+                            din_b[63:56] = mat_out[(3*8 + 7)*24 +: 8];
+                        end
+                        4'd4: begin
+                            din_b[7:0]   = mat_out[(4*8 + 0)*24 +: 8];
+                            din_b[15:8]  = mat_out[(4*8 + 1)*24 +: 8];
+                            din_b[23:16] = mat_out[(4*8 + 2)*24 +: 8];
+                            din_b[31:24] = mat_out[(4*8 + 3)*24 +: 8];
+                            din_b[39:32] = mat_out[(4*8 + 4)*24 +: 8];
+                            din_b[47:40] = mat_out[(4*8 + 5)*24 +: 8];
+                            din_b[55:48] = mat_out[(4*8 + 6)*24 +: 8];
+                            din_b[63:56] = mat_out[(4*8 + 7)*24 +: 8];
+                        end
+                        4'd5: begin
+                            din_b[7:0]   = mat_out[(5*8 + 0)*24 +: 8];
+                            din_b[15:8]  = mat_out[(5*8 + 1)*24 +: 8];
+                            din_b[23:16] = mat_out[(5*8 + 2)*24 +: 8];
+                            din_b[31:24] = mat_out[(5*8 + 3)*24 +: 8];
+                            din_b[39:32] = mat_out[(5*8 + 4)*24 +: 8];
+                            din_b[47:40] = mat_out[(5*8 + 5)*24 +: 8];
+                            din_b[55:48] = mat_out[(5*8 + 6)*24 +: 8];
+                            din_b[63:56] = mat_out[(5*8 + 7)*24 +: 8];
+                        end
+                        4'd6: begin
+                            din_b[7:0]   = mat_out[(6*8 + 0)*24 +: 8];
+                            din_b[15:8]  = mat_out[(6*8 + 1)*24 +: 8];
+                            din_b[23:16] = mat_out[(6*8 + 2)*24 +: 8];
+                            din_b[31:24] = mat_out[(6*8 + 3)*24 +: 8];
+                            din_b[39:32] = mat_out[(6*8 + 4)*24 +: 8];
+                            din_b[47:40] = mat_out[(6*8 + 5)*24 +: 8];
+                            din_b[55:48] = mat_out[(6*8 + 6)*24 +: 8];
+                            din_b[63:56] = mat_out[(6*8 + 7)*24 +: 8];
+                        end
+                        4'd7: begin
+                            din_b[7:0]   = mat_out[(7*8 + 0)*24 +: 8];
+                            din_b[15:8]  = mat_out[(7*8 + 1)*24 +: 8];
+                            din_b[23:16] = mat_out[(7*8 + 2)*24 +: 8];
+                            din_b[31:24] = mat_out[(7*8 + 3)*24 +: 8];
+                            din_b[39:32] = mat_out[(7*8 + 4)*24 +: 8];
+                            din_b[47:40] = mat_out[(7*8 + 5)*24 +: 8];
+                            din_b[55:48] = mat_out[(7*8 + 6)*24 +: 8];
+                            din_b[63:56] = mat_out[(7*8 + 7)*24 +: 8];
+                        end
+                    endcase
+
                     if (load_counter < 7) begin
                         load_counter <= load_counter + 1;
                         addr_b <= addr_b + 1;
-                    end
-                   //Write one row per cycle (8 elements from 64-bit memory)
-                    for (j = 0; j < 8; j = j + 1) begin
-                        set_mat_outmem(load_counter[2:0], j[2:0], din_b[j*8 +: 8]);
                     end
                 end
                 
@@ -294,72 +452,83 @@ module matrix_fma_8x8 #(
     end
     
     // Pipeline Stage 1: Multiply
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            valid_multiply <= 1'b0;
-            products <= 8192'd0;
-        end else begin
-            valid_multiply <= (state == MULTIPLY);
-            
-            if (state == MULTIPLY) begin
-                // Compute all products: A[i][k] * B[k][j]
-                for (i = 0; i < 8; i = i + 1) begin
-                    for (j = 0; j < 8; j = j + 1) begin
-                        for (k = 0; k < 8; k = k + 1) begin
-                            set_product(i[2:0], j[2:0], k[2:0], 
-                                       get_mat_a(i[2:0], k[2:0]) * get_mat_b(k[2:0], j[2:0]));
+    generate
+        genvar gi, gj, gk;
+        for (gi = 0; gi < 8; gi = gi + 1) begin : gen_mult_i
+            for (gj = 0; gj < 8; gj = gj + 1) begin : gen_mult_j
+                for (gk = 0; gk < 8; gk = gk + 1) begin : gen_mult_k
+                    always @(posedge clk or negedge rst_n) begin
+                        if (!rst_n) begin
+                            products[((gi * 64) + (gj * 8) + gk) * 16 +: 16] <= 16'd0;
+                        end else if (state == MULTIPLY) begin
+                            products[((gi * 64) + (gj * 8) + gk) * 16 +: 16] <= 
+                                mat_a[((gi * 8 + gk) * 8) +: 8] * mat_b[((gk * 8 + gj) * 8) +: 8];
                         end
                     end
                 end
             end
         end
-    end
+    endgenerate
     
     // Pipeline Stage 2: Sum products (dot product) and propagate C
+    generate
+        genvar gi_acc, gj_acc;
+        for (gi_acc = 0; gi_acc < 8; gi_acc = gi_acc + 1) begin : gen_acc_i
+            for (gj_acc = 0; gj_acc < 8; gj_acc = gj_acc + 1) begin : gen_acc_j
+                always @(posedge clk or negedge rst_n) begin
+                    if (!rst_n) begin
+                        dot_products[(gi_acc * 8 + gj_acc) * 19 +: 19] <= 19'd0;
+                    end else if (valid_multiply) begin
+                        dot_products[(gi_acc * 8 + gj_acc) * 19 +: 19] <= 
+                            products[((gi_acc * 64) + (gj_acc * 8) + 0) * 16 +: 16] +
+                            products[((gi_acc * 64) + (gj_acc * 8) + 1) * 16 +: 16] +
+                            products[((gi_acc * 64) + (gj_acc * 8) + 2) * 16 +: 16] +
+                            products[((gi_acc * 64) + (gj_acc * 8) + 3) * 16 +: 16] +
+                            products[((gi_acc * 64) + (gj_acc * 8) + 4) * 16 +: 16] +
+                            products[((gi_acc * 64) + (gj_acc * 8) + 5) * 16 +: 16] +
+                            products[((gi_acc * 64) + (gj_acc * 8) + 6) * 16 +: 16] +
+                            products[((gi_acc * 64) + (gj_acc * 8) + 7) * 16 +: 16];
+                    end
+                end
+            end
+        end
+    endgenerate
+    
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             valid_accumulate <= 1'b0;
-            dot_products <= 1216'd0;
             mat_c_pipe <= 1536'd0;
         end else begin
             valid_accumulate <= valid_multiply;
-            
             if (valid_multiply) begin
-                for (i = 0; i < 8; i = i + 1) begin
-                    for (j = 0; j < 8; j = j + 1) begin
-                        // Sum all 8 products for this output element
-                        set_dot_product(i[2:0], j[2:0],
-                            get_product(i[2:0], j[2:0], 3'd0) + get_product(i[2:0], j[2:0], 3'd1) +
-                            get_product(i[2:0], j[2:0], 3'd2) + get_product(i[2:0], j[2:0], 3'd3) +
-                            get_product(i[2:0], j[2:0], 3'd4) + get_product(i[2:0], j[2:0], 3'd5) +
-                            get_product(i[2:0], j[2:0], 3'd6) + get_product(i[2:0], j[2:0], 3'd7)
-                        );
-                    end
-                end
-                
-                // Delay mat_c to match pipeline
                 mat_c_pipe <= mat_c;
             end
         end
     end
     
     // Pipeline Stage 3: Add to accumulator and output
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            done_fma <= 1'b0;
-            mat_out <= 1536'd0;
-        end else begin
-            done_fma <= (state == DONE);
-            
-            if (valid_accumulate) begin
-                for (i = 0; i < 8; i = i + 1) begin
-                    for (j = 0; j < 8; j = j + 1) begin
-                        idx_c = (i * 8 + j) * ACCUMULATOR_WIDTH;
-                        set_mat_out(i[2:0], j[2:0], 
-                                   get_dot_product(i[2:0], j[2:0]) + mat_c_pipe[idx_c +: ACCUMULATOR_WIDTH]);
+    generate
+        genvar gi_out, gj_out;
+        for (gi_out = 0; gi_out < 8; gi_out = gi_out + 1) begin : gen_out_i
+            for (gj_out = 0; gj_out < 8; gj_out = gj_out + 1) begin : gen_out_j
+                always @(posedge clk or negedge rst_n) begin
+                    if (!rst_n) begin
+                        mat_out[((gi_out * 8 + gj_out) * 24) +: 24] <= 24'd0;
+                    end else if (valid_accumulate) begin
+                        mat_out[((gi_out * 8 + gj_out) * 24) +: 24] <= 
+                            dot_products[(gi_out * 8 + gj_out) * 19 +: 19] + 
+                            mat_c_pipe[((gi_out * 8 + gj_out) * 24) +: 24];
                     end
                 end
             end
+        end
+    endgenerate
+    
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            done_fma <= 1'b0;
+        end else begin
+            done_fma <= (state == DONE);
         end
     end
 

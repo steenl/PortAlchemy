@@ -1,0 +1,104 @@
+VCD info: dumpfile matrix_fma_8x8.vcd opened for output.
+VCD warning: ualink_turbordwr_tb.v:284: $dumpfile called after $dumpvars started,
+                                        using existing file (matrix_fma_8x8.vcd).
+========================================
+UALink Turbo64 Testbench Started
+Testing DPMEM through AXI Stream
+========================================
+
+Test 1: A=identity, B=5s, C=0
+
+=== Test 1: Memory Write Operation (opcode 0x0245) ===
+  Sending write packet: data=0xdeadbeefcafebeef
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              115000
+UAlink write opcode 0003
+  [Master Output] tdata=0x0245000000000003, tlast=0, time=              125000
+UAlink write opcode 0003
+UAlink write opcode 0003
+  [Master Output] tdata=0x0245000000000003, tlast=0, time=              135000
+  [State Change] -> IDLE
+UAlink write opcode 0003
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              145000
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              155000
+  [State Change] -> State 0x3
+Result[0][0] =        z (expected 5)
+Result[1][1] =        z (expected 5)
+Result[0][1] =        z (expected 0)
+  [DPMEM Write] we_a asserted at time=              165000
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              165000
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              175000
+  [DPMEM Write] we_a asserted at time=              175000
+  [DPMEM Write] we_a asserted at time=              185000
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              185000
+  Write packet sent
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              195000
+  [DPMEM Write] we_a asserted at time=              195000
+  [DPMEM Write] we_a asserted at time=              205000
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              205000
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              215000
+  [DPMEM Write] we_a asserted at time=              215000
+  [DPMEM Write] we_a asserted at time=              225000
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              225000
+UAlink write opcode beef
+  [Master Output] tdata=0xdeadbeefcafebeef, tlast=0, time=              235000
+  [DPMEM Write] we_a asserted at time=              235000
+  [State Change] -> IDLE
+  [Master Output] tdata=0xdeadbeefcafebeef, tlast=1, time=              245000
+  [Master Output] tdata=0x3031323334353637, tlast=1, time=              255000
+  [State Change] -> State 0x0
+  [Master Output] tdata=0xdeadbeefcafebef1, tlast=1, time=              265000
+  [Master Output] tdata=0x3031323334353637, tlast=1, time=              275000
+  [State Change] -> IDLE
+  [State Change] -> State 0x0
+  [Master Output] tdata=0xdeadbeefcafebef3, tlast=1, time=              285000
+  [Master Output] tdata=0x3031323334353637, tlast=1, time=              295000
+  [State Change] -> IDLE
+  [State Change] -> State 0x0
+  [Master Output] tdata=0xdeadbeefcafebef5, tlast=1, time=              305000
+  [Master Output] tdata=0x3031323334353637, tlast=1, time=              315000
+  [State Change] -> IDLE
+  [State Change] -> State 0x0
+  [State Change] -> IDLE
+  [State Change] -> State 0x0
+
+=== Test 2: Memory Read Operation (opcode 0x0145) ===
+  Sending read packet
+
+Test 2: A=2s, B=3s, C=10
+  [Master Output] tdata=0x3031323334353637, tlast=0, time=              435000
+UAlink write opcode 0003
+  [Master Output] tdata=0x0145000000000003, tlast=0, time=              445000
+UAlink write opcode 0003
+  [Master Output] tdata=0x0145000000000003, tlast=0, time=              455000
+  [State Change] -> IDLE
+  [Master Output] tdata=0x3031323334353637, tlast=1, time=              465000
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              475000
+  [State Change] -> WR_PKT
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              485000
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              495000
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              505000
+  Read packet sent, waiting for response...
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              515000
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              525000
+Result[0][0] =        z (expected 58 = 2*3*8 + 10)
+Result[3][5] =        z (expected 58)
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              535000
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              545000
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              555000
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              565000
+  [Master Output] tdata=0x3000000000000000, tlast=1, time=              575000
+  [State Change] -> IDLE
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              585000
+  [Master Output] tdata=0x3000000000000000, tlast=1, time=              595000
+  [State Change] -> State 0x0
+  [State Change] -> IDLE
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              605000
+  [Master Output] tdata=0x3000000000000000, tlast=1, time=              615000
+  [State Change] -> State 0x0
+  [State Change] -> IDLE
+  [Master Output] tdata=0xxxxxxxxxxxxxxxxx, tlast=1, time=              625000
+
+Tests completed
+ualink_fma.v:694: $finish called at 635000 (1ps)
+  [Master Output] tdata=0x3000000000000000, tlast=1, time=              635000
+  [State Change] -> State 0x0

@@ -1,0 +1,173 @@
+VCD info: dumpfile matrix_fma_8x8.vcd opened for output.
+[                   0] : System Reset Asserted...
+VCD warning: ualink_turbo64_tb.v:266: $dumpfile called after $dumpvars started,
+                                      using existing file (matrix_fma_8x8.vcd).
+[                7500] : System Reset De-asserted...
+
+========================================
+All Tests Completed!
+========================================
+UAlink write opcode 0000
+UAlink write opcode 0000
+UAlink write opcode 0000
+UAlink write opcode 0600
+
+Test 1: A=identity, B=5s, C=0
+UAlink write opcode d9b9
+UAlink write opcode d9b9
+UAlink write opcode 0600
+UAlink write opcode 0600
+UAlink write opcode 9896
+UAlink write opcode 9896
+UAlink write opcode 4241
+UAlink write opcode 4241
+UAlink write opcode 4a49
+UAlink write opcode 4a49
+UAlink write opcode 5251
+UAlink write opcode 5251
+UAlink write opcode 5a59
+UAlink write opcode 5a59
+UAlink write opcode 6867
+UAlink write opcode 6867
+UAlink write opcode 706f
+UAlink write opcode 706f
+UAlink write opcode 7877
+UAlink write opcode 7877
+UAlink write opcode 3534
+UAlink write opcode 3534
+UAlink write opcode 0c0c
+UAlink write opcode 0c0c
+UAlink write opcode 0d0d
+UAlink write opcode 0d0d
+UAlink write opcode 0e0e
+UAlink write opcode 0e0e
+UAlink write opcode 0f0f
+UAlink write opcode 0f0f
+UAlink write opcode 1010
+UAlink write opcode 1010
+UAlink write opcode 1111
+Result[0][0] =        z (expected 5)
+Result[1][1] =        z (expected 5)
+Result[0][1] =        z (expected 0)
+UAlink write opcode 1111
+UAlink write opcode 1212
+UAlink write opcode 1212
+UAlink write opcode 1313
+UAlink write opcode 1313
+UAlink write opcode 1414
+UAlink write opcode 1414
+UAlink write opcode 1515
+UAlink write opcode 1515
+UAlink write opcode 1616
+UAlink write opcode 1616
+UAlink write opcode 1717
+UAlink write opcode 1717
+UAlink write opcode 1818
+UAlink write opcode 1919
+UAlink write opcode 1a1a
+UAlink write opcode 1b1b
+Next random =  0
+UAlink write opcode 1c1c
+UAlink write opcode 1c1c
+UAlink write opcode 1d1d
+UAlink write opcode 1e1e
+UAlink write opcode ffff
+UAlink write opcode 0000
+UAlink write opcode 0000
+UAlink write opcode 5c00
+UAlink write opcode e1b9
+UAlink write opcode e1b9
+UAlink write opcode e1b9
+UAlink write opcode 0600
+UAlink write opcode 0600
+UAlink write opcode e1f4
+UAlink write opcode e1f4
+UAlink write opcode 0505
+UAlink write opcode 0505
+UAlink write opcode 0606
+UAlink write opcode 0606
+UAlink write opcode 0707
+UAlink write opcode 0707
+UAlink write opcode 0808
+UAlink write opcode 0808
+UAlink write opcode 0909
+UAlink write opcode 0909
+UAlink write opcode 0a0a
+UAlink write opcode 0a0a
+UAlink write opcode 0b0b
+UAlink write opcode 0b0b
+UAlink write opcode 0c0c
+UAlink write opcode 0c0c
+UAlink write opcode 0d0d
+UAlink write opcode 0d0d
+UAlink write opcode 0e0e
+UAlink write opcode 0f0f
+UAlink write opcode 1010
+UAlink write opcode 1111
+Next random =  0
+UAlink write opcode 1212
+UAlink write opcode 1212
+UAlink write opcode 1313
+UAlink write opcode 1414
+UAlink write opcode 1414
+UAlink write opcode 1515
+UAlink write opcode 1616
+UAlink write opcode 1616
+
+Test 2: A=2s, B=3s, C=10
+UAlink write opcode ffff
+UAlink write opcode 0000
+UAlink write opcode 0000
+UAlink write opcode 5c00
+UAlink write opcode 5c00
+UAlink write opcode e1b9
+UAlink write opcode e1b9
+UAlink write opcode 0600
+UAlink write opcode 0600
+UAlink write opcode e1f4
+UAlink write opcode e1f4
+UAlink write opcode 0505
+UAlink write opcode 0505
+UAlink write opcode 0606
+UAlink write opcode 0606
+UAlink write opcode 0707
+UAlink write opcode 0707
+UAlink write opcode 0808
+UAlink write opcode 0808
+UAlink write opcode 0909
+UAlink write opcode 0909
+UAlink write opcode 0a0a
+UAlink write opcode 0a0a
+UAlink write opcode 0b0b
+UAlink write opcode 0b0b
+UAlink write opcode 0c0c
+UAlink write opcode 0c0c
+UAlink write opcode 0d0d
+UAlink write opcode 0d0d
+UAlink write opcode 0e0e
+UAlink write opcode 0e0e
+UAlink write opcode 0f0f
+UAlink write opcode 0f0f
+UAlink write opcode 1010
+UAlink write opcode 1010
+UAlink write opcode 1111
+UAlink write opcode 1111
+UAlink write opcode 1212
+UAlink write opcode 1212
+UAlink write opcode 1313
+UAlink write opcode 1313
+UAlink write opcode 1414
+UAlink write opcode 1414
+UAlink write opcode 1515
+UAlink write opcode 1515
+UAlink write opcode 1616
+Result[0][0] =        z (expected 58 = 2*3*8 + 10)
+Result[3][5] =        z (expected 58)
+Next random =  0
+UAlink write opcode ffff
+UAlink write opcode 0000
+UAlink write opcode 0000
+UAlink write opcode 5c00
+
+Tests completed
+ualink_fma.v:694: $finish called at 635000 (1ps)

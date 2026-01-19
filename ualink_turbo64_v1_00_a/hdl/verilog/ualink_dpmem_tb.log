@@ -1,0 +1,56 @@
+VCD info: dumpfile ualink_dpmem_tb.vcd opened for output.
+========================================
+Dual Port RAM Testbench Started
+========================================
+
+Test 1: Port A Write and Read
+  [Port A Write] Addr=0x10, Data=0xdeadbeefcafebabe
+  WARNING: Write-first behavior violation at time                36000
+  WARNING: Write-first behavior violation at time                46000
+  [Port A Read]  Addr=0x10, Data=0xdeadbeefcafebabe
+
+Test 2: Port B operations (Note: Port B write is commented out in module)
+  [Port B Write] Addr=0x20, Data=0x123456789abcdef0
+  [Port B Read]  Addr=0x20, Data=0x123456789abcdef0
+
+Test 3: Multiple writes to Port A
+  [Port A Write] Addr=0x00, Data=0x0000000000000001
+  WARNING: Write-first behavior violation at time               156000
+  WARNING: Write-first behavior violation at time               166000
+  [Port A Write] Addr=0x01, Data=0x0000000000000002
+  [Port A Write] Addr=0x02, Data=0x0000000000000004
+  WARNING: Write-first behavior violation at time               196000
+  WARNING: Write-first behavior violation at time               206000
+  [Port A Write] Addr=0x03, Data=0x0000000000000008
+
+Test 4: Sequential reads from Port A
+  [Port A Read]  Addr=0x00, Data=0x0000000000000001
+  [Port A Read]  Addr=0x01, Data=0x0000000000000002
+  [Port A Read]  Addr=0x02, Data=0x0000000000000004
+  [Port A Read]  Addr=0x03, Data=0x0000000000000008
+
+Test 5: Write-first behavior (should see BEEFbeef on write)
+  [Port A Write] Addr=0x50, Data=0xaaaaaaaabbbbbbbb
+  WARNING: Write-first behavior violation at time               356000
+  WARNING: Write-first behavior violation at time               366000
+  dout_a after write = 0xaaaaaaaabbbbbbbb (expected BEEFbeef)
+  [Port A Read]  Addr=0x50, Data=0xaaaaaaaabbbbbbbb
+  dout_a after read = 0xaaaaaaaabbbbbbbb (expected AAAAAAAA_BBBBBBBB)
+
+Test 6: Simultaneous Port A and Port B access (different addresses)
+  [Port A Write] Addr=0xa0, Data=0x1111111111111111
+  WARNING: Write-first behavior violation at time               416000
+  WARNING: Write-first behavior violation at time               426000
+  [Port B Read]  Addr=0x10, Data=0xdeadbeefcafebabe
+
+Test 7: Same address access from both ports
+  [Port A Write] Addr=0xff, Data=0xffffffffffffffff
+  WARNING: Write-first behavior violation at time               456000
+  WARNING: Write-first behavior violation at time               466000
+  [Port B Read]  Addr=0xff, Data=0xffffffffffffffff
+  [Port A Read]  Addr=0xff, Data=0xffffffffffffffff
+
+========================================
+All tests completed!
+========================================
+ualink_dpmem_tb.v:162: $finish called at 556000 (1ps)
