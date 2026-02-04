@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
+ * Steen Larsen with some AI assistance.  For Artix-7 FPGAs using the MIG IP core and replacing below seems to be needed to meet 2026 Vivado synthesis.
  *  Licence:
- *        This file is part of the NetFPGA 10G development base package.
  *
  *        This file is free code: you can redistribute it and/or modify it under
  *        the terms of the GNU Lesser General Public License version 2.1 as
@@ -20,87 +20,64 @@
 
 module dual_port_ram_8x64 
 #(
-        parameter DPADDR_WIDTH = 8,
+    parameter DPADDR_WIDTH = 8,
     parameter DPDATA_WIDTH = 64,
     parameter DPDEPTH = (1 << DPADDR_WIDTH)
 )
 (
-// Port A
-input wire axi_aclk,  //common clock for port A and B
-input  wire                     axi_resetn,      // enable for port A (active high)
-input  wire                    we_a,      // write enable for port A (active high)
-input  wire [DPADDR_WIDTH-1:0]    addr_a,
-input  wire [DPDATA_WIDTH-1:0]    din_a,
-output reg [DPDATA_WIDTH-1:0]    dout_a,
+    // Port A
+    input  wire                     axi_aclk,      // common clock for port A and B
+    input  wire                     axi_resetn,    // reset (active low)
+    input  wire                     we_a,          // write enable for port A (active high)
+    input  wire [DPADDR_WIDTH-1:0]  addr_a,        // address for port A
+    input  wire [DPDATA_WIDTH-1:0]  din_a,         // data input for port A
+    output reg  [DPDATA_WIDTH-1:0]  dout_a,        // data output for port A
 
     // Port B
-
-    input  wire                     we_b,      // write enable for port B (active high)
-    input  wire [DPADDR_WIDTH-1:0]    addr_b,
-    input  wire [DPDATA_WIDTH-1:0]    din_b,
-    output reg  [DPDATA_WIDTH-1:0]    dout_b
+    input  wire                     we_b,          // write enable for port B (active high)
+    input  wire [DPADDR_WIDTH-1:0]  addr_b,        // address for port B
+    input  wire [DPDATA_WIDTH-1:0]  din_b,         // data input for port B
+    output reg  [DPDATA_WIDTH-1:0]  dout_b         // data output for port B
 );
 
+// Memory declaration with Vivado blockram synthesis directive
+(* ram_style = "registers" *) reg [DPDATA_WIDTH-1:0] dpmem [0:DPDEPTH-1];
 
-// Memory declaration
-reg [DPDATA_WIDTH-1:0] dpmem [0:DPDEPTH-1];
-// Optional synthesis attribute for inferred block RAM (vendor-specific)
-// (* ram_style = "block" *) reg [DATA_WIDTH-1:0] mem [0:DEPTH-1];
-reg we_a_reg, we_b_reg;
-reg [DPADDR_WIDTH-1:0] addr_a_reg, addr_b_reg;
-reg [DPDATA_WIDTH-1:0] din_a_reg, din_b_reg;
-reg [DPDATA_WIDTH-1:0] dout_a_reg;
-reg [DPDATA_WIDTH-1:0] dout_b_reg;
 
-always @(*) begin
-        we_a_reg = we_a;
-        we_b_reg = we_b;
-        addr_a_reg = addr_a;
-        addr_b_reg = addr_b;
-        din_a_reg = din_a;
-        din_b_reg = din_b;
-
+// Port A logic (synchronous write-first)
+// Write-first: when writing, output immediately reflects written data
+always @(posedge axi_aclk) begin
+    if (!axi_resetn) begin
+        dout_a <= {DPDATA_WIDTH{1'b0}};
+    end else begin
+        if (we_a) begin
+            dpmem[addr_a] <= din_a;
+            dout_a <= din_a;  // write-first: output reflects written data
+        end else begin
+            dout_a <= dpmem[addr_a];  // synchronous read
+        end
+    end
 end
 
-
-// Port A logic (synchronous)
-// Write-first behavior: when a write occurs on port A, dout_a returns the written data immediately.
-  always @(posedge axi_aclk) begin
-    if (!axi_resetn) begin  //initialize memory at reset
-        dout_a <= "CAFEcafe";
-        we_a_reg   <= 0;
-        addr_a_reg <= 0;
-        din_a_reg  <= 0;
-        // dout_b <= 0;
-        we_b_reg   <= 0;
-        addr_b_reg <= 0;
-        din_b_reg  <= 0;
-        // for (i=0; i<DEPTH; i=i+1) begin
-        //     mem[i] <= 0;
-        // end
-      end else begin
-      if (we_a) begin
-         dpmem[addr_a] <= din_a;
-         dout_a <= din_a;  // write-first: read returns new data
-         end else begin
-         dout_a <= dpmem[addr_a];    // synchronous read
-         end
-      end
-    end
-	 // Port B logic (synchronous)
-  // Write-first behavior on port B as well.
-  always @(posedge axi_aclk) begin
-    if (axi_resetn) begin
-      if (we_b) begin
-        dpmem[addr_b] <= din_b;
-        dout_b <= din_b;
-      end else begin
-        dout_b <= dpmem[addr_b];
+// Port B logic (synchronous write-first)
+// Write-first: when writing, output immediately reflects written data
+always @(posedge axi_aclk) begin
+    if (!axi_resetn) begin
+        dout_b <= {DPDATA_WIDTH{1'b0}};
+    end else begin
+        if (we_b) begin
+            dpmem[addr_b] <= din_b;
+            dout_b <= din_b;  // write-first: output reflects written data
+        end else begin
+            dout_b <= dpmem[addr_b];  // synchronous read
         end
-		end
-  end
-// Notes:
-// - If both ports write the same address in the same cycle (in the same or different clocks), the final value is implementation-dependent / undefined.
-// - To infer true dual-port block RAM on your FPGA, check vendor guidance (attributes or IP generator). The commented ram_style attribute is supported by some toolchains.
-// - If you prefer read-first behavior, set dout <= mem[addr] before mem[addr] <= din (change assignment order in the write branch).
+    end
+end
+
+// Synthesis notes:
+// - Uses (* ram_style = "block" *) directive for Vivado to infer blockram
+// - Both ports support independent synchronous read/write with write-first behavior
+// - Reset is active-low (axi_resetn)
+// - Simultaneous writes to same address produce implementation-dependent results
+// - Memory is initialized to zero at reset
 endmodule

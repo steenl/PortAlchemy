@@ -1,4 +1,9 @@
 # PortAlchemy
+Jan 2026: This project is in standby, pending other priorities.  The logic syntheizes and tests on a V5 with ISE14.2 and synthesizes but remains unvalidated on Artix-7 -100T Veloce.  Logic FSM/control is small and enables parallelism (i.e. 4 FSMs alternating on rd/wr or SET/GET with conflict block logic) to easily enable full line rate support into the 200+Gbps range.  
+Current code is at 64bit wide AXIS, but easily expanded to 256bit enabling each FSM to operate at 27.3Gbps when accounting for standard Ethernet framing.
+Read latency at 100Mhz FSM, assuming 256bit, is 44ns.  FMA operation is 3cycles, within the write/read gap, so compute in memory is "instantaneous".  SET/GET latency needs to include any required hashing algorithm logic delay.
+
+
 Focus on UALink usage cases interconnecting CPUs, GPUs, and memory pools.  Leveraged from prior NetFPGA10GbE work, we scale to 200+Gbps with prioritized queueing between customized RISC-V and memory targets on real FPGAs and fabrics.
 
 For some of the motivation see: https://medium.com/@steen.knud.larsen/why-ualink-could-change-memory-architecture-82f2d6c2e67f
